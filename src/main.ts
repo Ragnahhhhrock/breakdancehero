@@ -3,7 +3,7 @@ import { Stage } from './stage/scene';
 import { Game, type Result } from './game/engine';
 import { Highway } from './game/highway';
 import type { Difficulty } from './game/chart';
-import { clearUI, showMenu, showPause, showResults } from './ui/ui';
+import { clearUI, showMenu, showPause, showResults, showScores } from './ui/ui';
 
 const stageCanvas = document.getElementById('stage') as HTMLCanvasElement;
 const hwCanvas = document.getElementById('hw') as HTMLCanvasElement;
@@ -52,7 +52,7 @@ let loaded = false;
 function toMenu() {
   game.quit();
   hud.hidden = true;
-  menu = showMenu(game, loaded, play);
+  menu = showMenu(game, loaded, play, (d) => showScores(d, toMenu));
 }
 async function play(d: Difficulty) {
   clearUI();
