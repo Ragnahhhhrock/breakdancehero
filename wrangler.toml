@@ -12,5 +12,4 @@ ALLOWED_ORIGINS = "https://breakdancehero.com,https://www.breakdancehero.com"
 [[d1_databases]]
 binding = "DB"
 database_name = "breakdancehero-scores"
-# Run `npx wrangler d1 create breakdancehero-scores` and paste the printed id here.
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "45bc6add-1e20-494b-bcc1-f48a3be8f93c"
