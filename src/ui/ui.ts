@@ -28,6 +28,7 @@ export function showMenu(game: Game, ready: boolean, onPlay: (d: Difficulty) => 
       Timing <button class="btn small" id="offm">−</button><b id="offv"></b><button class="btn small" id="offp">+</button></div>
     <div class="hint">Tap the arrows in the lanes as they hit the line. Keys: ← ↓ ↑ → or A S W D. Headphones recommended. If hits feel late, nudge Timing.</div>
     <a class="coffee" href="https://buy.stripe.com/fZu00b521d4p4gU0UcaAw05" target="_blank" rel="noopener noreferrer">☕ Buy me a coffee · $5</a>
+    <div class="credit">Another <a href="https://malgordon.com" target="_blank" rel="noopener noreferrer">Mal Gordon</a> creation</div>
   `);
   const sync = () => {
     p.querySelectorAll<HTMLButtonElement>('#diffs .btn').forEach((b) => b.classList.toggle('on', b.dataset.d === diff));
