@@ -112,9 +112,6 @@ export class Stage {
   private time = 0;
   private lastBeatIdx = -99;
   private beatKick = 0;
-  private w = 1;
-  private h = 1;
-  private portrait = true;
 
   constructor(canvas: HTMLCanvasElement, opts: { lowPower: boolean }) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: !opts.lowPower, alpha: false, powerPreference: 'high-performance' });
@@ -274,8 +271,6 @@ export class Stage {
 
   /** Fit the view: where the dancer sits on screen and how large. */
   layout(width: number, height: number, anchorX: number, anchorY: number, heightFrac: number, dpr: number) {
-    this.w = width; this.h = height;
-    this.portrait = width < height * 1.1;
     this.renderer.setPixelRatio(dpr);
     this.renderer.setSize(width, height, false);
     const cam = this.camera;
