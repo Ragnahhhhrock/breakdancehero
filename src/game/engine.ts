@@ -195,6 +195,51 @@ export class Game {
     o.stop(at + dur + 0.02);
   }
 
+  /** Synthesised crowd applause: a filtered-noise roar bed plus scattered individual claps. Bypasses `master` so the music fade-out doesn't mute it. */
+  private applause(grade: string) {
+    const c = this.ctx;
+    const level = ({ S: 1, A: 0.85, B: 0.7, C: 0.5, D: 0.35 } as Record<string, number>)[grade] ?? 0.5;
+    const dur = 2.5 + level * 2;
+    const t0 = c.currentTime + 0.1;
+    const out = c.createGain();
+    out.gain.setValueAtTime(0.0001, t0);
+    out.gain.exponentialRampToValueAtTime(0.9 * level, t0 + 0.35);
+    out.gain.setValueAtTime(0.9 * level, t0 + dur * 0.45);
+    out.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    out.connect(c.destination);
+    const len = Math.floor(c.sampleRate * 0.5);
+    const buf = c.createBuffer(1, len, c.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    // roar bed
+    const bed = c.createBufferSource();
+    bed.buffer = buf; bed.loop = true;
+    const bp = c.createBiquadFilter();
+    bp.type = 'bandpass'; bp.frequency.value = 1800; bp.Q.value = 0.5;
+    const bedGain = c.createGain();
+    bedGain.gain.value = 0.22;
+    bed.connect(bp).connect(bedGain).connect(out);
+    bed.start(t0); bed.stop(t0 + dur + 0.1);
+    // individual claps, dense in the middle
+    const claps = Math.round(dur * 70);
+    for (let i = 0; i < claps; i++) {
+      const u = Math.random();
+      const t = t0 + u * dur;
+      const dens = Math.sin(Math.PI * Math.min(1, u * 1.1));
+      if (Math.random() > 0.25 + 0.75 * dens) continue;
+      const src = c.createBufferSource();
+      src.buffer = buf;
+      const f = c.createBiquadFilter();
+      f.type = 'bandpass'; f.frequency.value = 1200 + Math.random() * 2800; f.Q.value = 1.2;
+      const g = c.createGain();
+      const v = 0.25 + Math.random() * 0.5;
+      g.gain.setValueAtTime(v, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.03 + Math.random() * 0.04);
+      src.connect(f).connect(g).connect(out);
+      src.start(t, Math.random() * 0.4, 0.1);
+    }
+  }
+
   private stopAudio() {
     if (this.src) { try { this.src.stop(); } catch { /* already stopped */ } this.src.disconnect(); this.src = null; }
   }
@@ -299,6 +344,7 @@ export class Game {
     this.master.gain.setValueAtTime(1, t);
     this.master.gain.linearRampToValueAtTime(0, t + 1.2);
     setTimeout(() => this.stopAudio(), 1400);
+    this.applause(grade);
     this.phase = 'results';
     this.cb.onEnd({
       score: this.score, accuracy: acc, grade, maxCombo: this.maxCombo, counts: { ...this.counts },
