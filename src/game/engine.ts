@@ -74,6 +74,54 @@ export class Game {
     this.master.connect(this.ctx.destination);
     try { this.offset = parseFloat(localStorage.getItem('bdh.offset') ?? '0') || 0; } catch { /* ignore */ }
     try { this.tapSound = localStorage.getItem('bdh.tap') === '1'; } catch { /* ignore */ }
+    this.installUnlock();
+  }
+
+  /**
+   * iOS (Safari/Chrome, all WebKit) keeps Web Audio suspended until a user gesture and
+   * mutes it when the ringer switch is on silent. Unlock on the first real gesture:
+   * switch the audio session to "playback", loop a silent <audio> element (moves audio
+   * off the ringer channel), resume the context and play a one-sample buffer.
+   */
+  private unlocked = false;
+  private silentEl: HTMLAudioElement | null = null;
+
+  private installUnlock() {
+    const events = ['touchend', 'pointerup', 'click', 'keydown'] as const;
+    const handler = () => {
+      this.unlockAudio();
+      if (this.unlocked) events.forEach((e) => window.removeEventListener(e, handler, true));
+    };
+    events.forEach((e) => window.addEventListener(e, handler, true));
+    this.ctx.addEventListener('statechange', () => {
+      // iOS can drop the context to 'interrupted' (calls, tab switches); recover on next gesture
+      if (this.ctx.state !== 'running') this.unlocked = false;
+    });
+  }
+
+  unlockAudio() {
+    try {
+      const nav = navigator as Navigator & { audioSession?: { type: string } };
+      if (nav.audioSession) nav.audioSession.type = 'playback';
+    } catch { /* unsupported */ }
+    try {
+      if (!this.silentEl) {
+        const el = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=');
+        el.loop = true;
+        el.setAttribute('playsinline', '');
+        this.silentEl = el;
+      }
+      void this.silentEl.play().catch(() => { /* needs a gesture; retried on next one */ });
+    } catch { /* ignore */ }
+    if (this.ctx.state !== 'running') void this.ctx.resume().catch(() => { /* retry on next gesture */ });
+    try {
+      const b = this.ctx.createBuffer(1, 1, this.ctx.sampleRate);
+      const s = this.ctx.createBufferSource();
+      s.buffer = b;
+      s.connect(this.ctx.destination);
+      s.start(0);
+    } catch { /* ignore */ }
+    this.unlocked = this.ctx.state === 'running';
   }
 
   async load(onProgress?: (f: number) => void): Promise<void> {
@@ -114,7 +162,9 @@ export class Game {
 
   async start(diff: Difficulty) {
     if (!this.buffer) return;
-    await this.ctx.resume();
+    this.unlockAudio();
+    // don't hang forever if iOS never settles resume(); proceed after a short wait
+    await Promise.race([this.ctx.resume().catch(() => {}), new Promise((r) => setTimeout(r, 600))]);
     this.stopAudio();
     this.difficulty = diff;
     this.approach = APPROACH[diff];
