@@ -4,6 +4,9 @@
  */
 import * as THREE from 'three';
 import { Dancer, type MoveName } from './dancer';
+import { DJBooth } from './dj';
+import { Crew } from './crew';
+import { Director, type BoothPlace } from './director';
 
 export const LANE_COLORS = [0xff2d95, 0x17e1ff, 0xb6ff3d, 0xffb02e];
 
@@ -12,6 +15,9 @@ const PALETTES: number[][] = [
   [0xffb02e, 0xff2d95, 0xffe14d],
   [0x17e1ff, 0xb6ff3d, 0x9d6bff],
 ];
+
+/** The DJ's corner: back left of the floor, turned to face the dancer. */
+const BOOTH: BoothPlace = { x: -3.7, z: -3.7, yaw: Math.atan2(3.7, 3.7) };
 
 interface Ripple { x: number; z: number; t0: number; color: THREE.Color; size: number }
 
@@ -26,6 +32,8 @@ export interface StageState {
   combo: number;
   move: MoveName;
 }
+
+const _dir = new THREE.Vector3();
 
 const TILE_N = 12;
 const TILE = 0.5;
@@ -88,6 +96,93 @@ function signTexture(): THREE.CanvasTexture {
   return t;
 }
 
+const NEON_W = 1024;
+const NEON_H = 480;
+type NeonLayer = 'base' | 'club' | 'breakin';
+
+function neonPath(g: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+  g.beginPath();
+  g.moveTo(x + r, y);
+  g.arcTo(x + w, y, x + w, y + h, r);
+  g.arcTo(x + w, y + h, x, y + h, r);
+  g.arcTo(x, y + h, x, y, r);
+  g.arcTo(x, y, x + w, y, r);
+  g.closePath();
+}
+
+function glowText(g: CanvasRenderingContext2D, text: string, x: number, y: number, glow: string, core: string) {
+  g.save();
+  g.fillStyle = glow;
+  g.shadowColor = glow;
+  for (const blur of [64, 32, 14]) { g.shadowBlur = blur; g.fillText(text, x, y); }
+  g.shadowBlur = 5;
+  g.fillStyle = core;
+  g.fillText(text, x, y);
+  g.restore();
+}
+
+/** Font sizes for the two lines, shrunk if needed so the lettering sits inside the tube border. */
+function neonSizes(g: CanvasRenderingContext2D): { club: number; breakin: number } {
+  const fit = (text: string, px: number) => {
+    g.font = `400 ${px}px Pacifico, 'Brush Script MT', cursive`;
+    const w = g.measureText(text).width;
+    return w > NEON_W - 230 ? (px * (NEON_W - 230)) / w : px;
+  };
+  return { club: fit('Club', 128), breakin: fit("Breakin'", 176) };
+}
+
+/** One layer of the "Club Breakin'" sign: the unlit board, or a lit tube group drawn on a clear canvas. */
+function neonTexture(layer: NeonLayer): THREE.CanvasTexture {
+  const c = document.createElement('canvas');
+  c.width = NEON_W; c.height = NEON_H;
+  const g = c.getContext('2d')!;
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  const font = (px: number) => `400 ${px}px Pacifico, 'Brush Script MT', cursive`;
+  const size = neonSizes(g);
+  if (layer === 'base') {
+    neonPath(g, 14, 14, NEON_W - 28, NEON_H - 28, 70);
+    g.fillStyle = 'rgba(10,5,28,0.86)';
+    g.fill();
+    g.lineWidth = 4;
+    g.strokeStyle = '#2a1d52';
+    g.stroke();
+    // unlit glass tubes
+    neonPath(g, 44, 44, NEON_W - 88, NEON_H - 88, 52);
+    g.lineWidth = 9;
+    g.strokeStyle = 'rgba(23,225,255,0.22)';
+    g.stroke();
+    g.font = font(size.club);
+    g.fillStyle = 'rgba(160,225,240,0.28)';
+    g.fillText('Club', NEON_W / 2, 142);
+    g.font = font(size.breakin);
+    g.fillStyle = 'rgba(240,150,200,0.28)';
+    g.fillText("Breakin'", NEON_W / 2, 322);
+  } else if (layer === 'club') {
+    neonPath(g, 44, 44, NEON_W - 88, NEON_H - 88, 52);
+    g.save();
+    g.lineWidth = 9;
+    g.strokeStyle = '#17e1ff';
+    g.shadowColor = '#17e1ff';
+    g.shadowBlur = 26;
+    g.stroke();
+    g.shadowBlur = 0;
+    g.lineWidth = 3;
+    g.strokeStyle = '#e6fcff';
+    g.stroke();
+    g.restore();
+    g.font = font(size.club);
+    glowText(g, 'Club', NEON_W / 2, 142, '#17e1ff', '#e6fcff');
+  } else {
+    g.font = font(size.breakin);
+    glowText(g, "Breakin'", NEON_W / 2, 322, '#ff2d95', '#ffe3f1');
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 4;
+  return t;
+}
+
 export class Stage {
   readonly renderer: THREE.WebGLRenderer;
   readonly scene = new THREE.Scene();
@@ -115,7 +210,19 @@ export class Stage {
   private cyanLight = new THREE.PointLight(0x17e1ff, 30, 12, 1.6);
   private readonly dummy = new THREE.Object3D();
 
+  readonly dj = new DJBooth();
+  readonly crew = new Crew();
+  readonly director: Director;
+  private neonMats = {} as Record<NeonLayer, THREE.MeshBasicMaterial>;
+  private neonHalos: THREE.MeshBasicMaterial[] = [];
+  private nextFlicker = 3;
+  private flickerUntil = 0;
+
   private camBase = new THREE.Vector3(2.5, 2.4, 6.2);
+  private baseTan = 1;
+  private baseDist = 1;
+  private camPos = new THREE.Vector3();
+  private camTarget = new THREE.Vector3();
   private time = 0;
   private lastBeatIdx = -99;
   private beatKick = 0;
@@ -126,12 +233,19 @@ export class Stage {
     this.scene.background = new THREE.Color(0x07041a);
     this.scene.fog = new THREE.FogExp2(0x07041a, 0.04);
 
+    const reduce = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    this.director = new Director({ booth: BOOTH, reducedMotion: reduce });
+
     this.buildLights();
     this.buildFloor();
     this.buildWall();
+    this.buildNeonSign();
     this.buildCrowd();
     this.buildBoombox();
     this.buildBeams();
+    this.dj.root.position.set(BOOTH.x, 0, BOOTH.z);
+    this.dj.root.rotation.y = BOOTH.yaw;
+    this.scene.add(this.dj.root, this.crew.root);
     this.scene.add(this.dancer.root);
     this.dancer.setFacing(Math.atan2(this.camBase.x, this.camBase.z) * 0.9);
   }
@@ -222,6 +336,41 @@ export class Stage {
     this.scene.add(this.eq);
   }
 
+  /** The "Club Breakin'" neon: unlit glass tubes on a dark board with the lit tubes added on top, so they can flicker. */
+  private buildNeonSign() {
+    const g = new THREE.Group();
+    const W = 3.9, H = (W * NEON_H) / NEON_W;
+    const layers: NeonLayer[] = ['base', 'club', 'breakin'];
+    layers.forEach((layer, i) => {
+      const mat = new THREE.MeshBasicMaterial({
+        map: neonTexture(layer), transparent: true, depthWrite: false, fog: false,
+        blending: layer === 'base' ? THREE.NormalBlending : THREE.AdditiveBlending,
+      });
+      const mesh = new THREE.Mesh(new THREE.PlaneGeometry(W, H), mat);
+      mesh.position.z = i * 0.012;
+      mesh.renderOrder = 2 + i;
+      g.add(mesh);
+      this.neonMats[layer] = mat;
+    });
+    // coloured light thrown onto the wall behind
+    for (const [col, oy] of [[0x17e1ff, 0.5], [0xff2d95, -0.35]] as const) {
+      const mat = new THREE.MeshBasicMaterial({
+        color: col, map: glowTexture(), transparent: true, opacity: 0.22, blending: THREE.AdditiveBlending, depthWrite: false, fog: false,
+      });
+      const halo = new THREE.Mesh(new THREE.PlaneGeometry(6.4, 3.4), mat);
+      halo.position.set(0, oy, -0.1);
+      g.add(halo);
+      this.neonHalos.push(mat);
+    }
+    g.position.set(-4.7, 2.7, -6.04);
+    g.rotation.y = 0.18;
+    this.scene.add(g);
+    // redraw the lettering once the script font has loaded
+    void document.fonts?.load('176px Pacifico').then(() => {
+      for (const layer of layers) { this.neonMats[layer].map = neonTexture(layer); this.neonMats[layer].needsUpdate = true; }
+    });
+  }
+
   private buildCrowd() {
     const N = 34;
     this.crowdBody = new THREE.InstancedMesh(new THREE.CapsuleGeometry(0.17, 0.5, 4, 8), new THREE.MeshToonMaterial({ color: 0xffffff }), N);
@@ -231,15 +380,33 @@ export class Stage {
     const skins = [0xf0c8a4, 0xc58a5c, 0x8d5a3b, 0x5e3b27, 0xe3b48a];
     let seed = 7;
     const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+    // keep the crowd out of the DJ's corner, off the crew and out of the way of the cameras
+    const clear = [
+      { ...BOOTH, r: 2.3 },
+      ...this.crew.sites().map((p) => ({ ...p, r: 0.9 })),
+      ...this.director.sites().map((p) => ({ ...p, r: 1.1 })),
+    ];
+    let j = 0;
     for (let i = 0; i < N; i++) {
       const a = -0.18 * Math.PI + (i / (N - 1)) * 1.36 * Math.PI;
       const r = 3.5 + rnd() * 1.4 + (i % 2) * 0.6;
-      this.crowd.push({ x: Math.cos(a) * r, z: -Math.sin(a) * r + 0.2, ph: rnd() * 6.28, s: 0.9 + rnd() * 0.25 });
-      this.crowdBody.setColorAt(i, this.tmpC.setHex(jackets[Math.floor(rnd() * jackets.length)]));
-      this.crowdHead.setColorAt(i, this.tmpC.setHex(skins[Math.floor(rnd() * skins.length)]));
-      this.crowdArms.setColorAt(i * 2, this.tmpC.setHex(skins[Math.floor(rnd() * skins.length)]));
-      this.crowdArms.setColorAt(i * 2 + 1, this.tmpC);
+      const ph = rnd() * 6.28;
+      const sc = 0.9 + rnd() * 0.25;
+      const jacket = jackets[Math.floor(rnd() * jackets.length)];
+      const skinH = skins[Math.floor(rnd() * skins.length)];
+      const skinA = skins[Math.floor(rnd() * skins.length)];
+      const x = Math.cos(a) * r, z = -Math.sin(a) * r + 0.2;
+      if (clear.some((c) => Math.hypot(x - c.x, z - c.z) < c.r)) continue;
+      this.crowd.push({ x, z, ph, s: sc });
+      this.crowdBody.setColorAt(j, this.tmpC.setHex(jacket));
+      this.crowdHead.setColorAt(j, this.tmpC.setHex(skinH));
+      this.crowdArms.setColorAt(j * 2, this.tmpC.setHex(skinA));
+      this.crowdArms.setColorAt(j * 2 + 1, this.tmpC);
+      j++;
     }
+    this.crowdBody.count = j;
+    this.crowdHead.count = j;
+    this.crowdArms.count = j * 2;
     this.scene.add(this.crowdBody, this.crowdHead, this.crowdArms);
   }
 
@@ -285,13 +452,18 @@ export class Stage {
   }
 
   /** Fit the view: where the dancer sits on screen and how large. */
-  layout(width: number, height: number, anchorX: number, anchorY: number, heightFrac: number, dpr: number) {
+  layout(width: number, height: number, anchorX: number, anchorY: number, heightFrac: number, dpr: number, band = 0.9) {
     this.renderer.setPixelRatio(dpr);
     this.renderer.setSize(width, height, false);
     const cam = this.camera;
     const dist = this.camBase.distanceTo(new THREE.Vector3(0, 0.9, 0));
     cam.aspect = width / height;
-    cam.fov = THREE.MathUtils.radToDeg(2 * Math.atan((0.5 * 2.0) / (heightFrac * dist)));
+    // the dancer fills `heightFrac` of the screen from the default camera. Other shots keep that scale
+    // (times their zoom) however far the camera is, and never zoom past the free band above the highway.
+    this.baseDist = dist;
+    this.baseTan = 1 / (heightFrac * dist);
+    this.director.maxZoom = Math.min(1.6, Math.max(1, (0.92 * band) / heightFrac));
+    cam.fov = THREE.MathUtils.radToDeg(2 * Math.atan(this.baseTan));
     cam.position.copy(this.camBase);
     cam.lookAt(0, 0.9, 0);
     cam.clearViewOffset();
@@ -312,9 +484,15 @@ export class Stage {
   }
 
   miss() { this.missFlash = 1; }
-  burst() { this.freezeFlash = 1; this.pulse = 1; }
+  burst() {
+    this.freezeFlash = 1;
+    this.pulse = 1;
+    this.crew.cheer();
+    this.director.hero();
+  }
 
   update(dt: number, s: StageState) {
+    dt = Math.max(0, dt);
     this.time += dt;
     const beatIdx = Math.floor(s.beat);
     const ph = s.beat - beatIdx;
@@ -329,23 +507,54 @@ export class Stage {
 
     this.dancer.setMove(s.move);
     this.dancer.update(dt, s.beat, s.bar);
+    const hype = Math.min(1, 0.15 + s.energy * 0.5 + Math.min(1, s.combo / 40) * 0.5);
+    this.crew.update(dt, { beat: s.beat, hype, dancerFrozen: s.move === 'freeze' });
+    this.dj.update(dt, s.beat, s.energy, s.kick);
 
     this.updateFloor(s, ph);
     this.updateEq(s, ph);
     this.updateCrowd(s);
     this.updateBeams(s);
+    this.updateNeon(s);
 
     const flash = this.beatKick * (0.35 + s.energy * 0.65) + this.pulse * 0.6;
     this.pinkLight.intensity = 18 + 40 * flash;
     this.cyanLight.intensity = 18 + 40 * (1 - ph) * s.energy;
     for (const w of this.woofer) w.scale.set(1 + 0.18 * this.beatKick, 1, 1 + 0.18 * this.beatKick);
 
-    // camera: gentle sway, a push on every beat and on the freeze burst
+    this.updateCamera(dt, s);
+  }
+
+  /** The director picks the shot; here it becomes a camera with a little hand-held sway and a push on the beat. */
+  private updateCamera(dt: number, s: StageState) {
+    const shot = this.director.update(s.beat, dt, { move: s.move, energy: s.energy });
     const cam = this.camera;
-    const sway = Math.sin(this.time * 0.5) * 0.25;
-    const push = this.beatKick * 0.05 * (0.4 + s.energy) + this.freezeFlash * 0.4;
-    cam.position.set(this.camBase.x + sway, this.camBase.y + Math.sin(this.time * 0.37) * 0.08, this.camBase.z - push);
-    cam.lookAt(0, 0.9, 0);
+    const pos = this.camPos.set(...shot.pos);
+    const target = this.camTarget.set(...shot.target);
+    pos.x += Math.sin(this.time * 0.5) * shot.sway;
+    pos.y += Math.sin(this.time * 0.37) * shot.sway * 0.32;
+    // a push on every beat, and a bigger one on the freeze burst while the dancer is the subject
+    const push = this.beatKick * 0.05 * (0.4 + s.energy) + (shot.dj ? 0 : this.freezeFlash * 0.4);
+    pos.addScaledVector(_dir.subVectors(target, pos).normalize(), push);
+    cam.position.copy(pos);
+    cam.lookAt(target);
+    // keep the subject the same size from any distance, times the shot's zoom
+    const fov = THREE.MathUtils.radToDeg(2 * Math.atan((this.baseTan * this.baseDist) / (pos.distanceTo(target) * shot.zoom)));
+    if (Math.abs(fov - cam.fov) > 1e-4) { cam.fov = fov; cam.updateProjectionMatrix(); }
+  }
+
+  /** "Breakin'" flickers like a tired tube now and then; the whole sign breathes with the beat. */
+  private updateNeon(s: StageState) {
+    if (this.time > this.nextFlicker) {
+      this.flickerUntil = this.time + 0.4;
+      this.nextFlicker = this.time + 6 + Math.random() * 8;
+    }
+    const flick = this.time < this.flickerUntil ? (Math.floor(this.time * 28) % 3 === 0 ? 0.12 : 1) : 1;
+    const breathe = 0.82 + 0.18 * (this.beatKick * (0.4 + 0.6 * s.energy));
+    this.neonMats.club.opacity = breathe;
+    this.neonMats.breakin.opacity = breathe * flick;
+    this.neonHalos[0].opacity = 0.14 + 0.1 * breathe;
+    this.neonHalos[1].opacity = (0.14 + 0.1 * breathe) * flick;
   }
 
   private updateFloor(s: StageState, ph: number) {

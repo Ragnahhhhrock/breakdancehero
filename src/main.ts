@@ -30,11 +30,11 @@ function layout() {
     // portrait: dancer on top, highway in the lower half
     const hh = Math.min(H * 0.56, 560);
     highway.layout({ x: Math.max(0, (W - Math.min(W, 460)) / 2), y: H - hh, w: Math.min(W, 460), h: hh });
-    stage.layout(W, H, 0.5, (hudTop + (H - hh)) / 2 / H + 0.04, Math.min(0.34, ((H - hh - hudTop) / H) * 0.62), d);
+    stage.layout(W, H, 0.5, (hudTop + (H - hh)) / 2 / H + 0.04, Math.min(0.34, ((H - hh - hudTop) / H) * 0.62), d, (H - hh - hudTop) / H);
   } else {
     const hw = Math.min(W * 0.42, 440);
     highway.layout({ x: W - hw - 24, y: hudTop, w: hw, h: H - hudTop - 8 });
-    stage.layout(W, H, (W - hw - 24) / 2 / W, 0.56, 0.62, d);
+    stage.layout(W, H, (W - hw - 24) / 2 / W, 0.56, 0.62, d, (H - hudTop) / H);
   }
 }
 window.addEventListener('resize', layout);
@@ -99,7 +99,7 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && (ga
 let last = performance.now();
 function frame(now: number) {
   requestAnimationFrame(frame);
-  const dt = Math.min(0.05, (now - last) / 1000);
+  const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
   last = now;
   game.update();
   const live = game.phase !== 'menu' && game.phase !== 'results';
