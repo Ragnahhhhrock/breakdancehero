@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#07041a" />
+<meta name="robots" content="noindex" />
+<title>Style Guide | Breakdance Hero</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="/src/design/guide.css" />
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <h1>Breakdance Hero<span>Style Guide</span></h1>
+  <p class="sub" style="margin:var(--space-4) auto 0">1980s electro · neon on night · tap the beat</p>
+  <nav class="toc" aria-label="Sections">
+    <a href="#brand">Brand</a><a href="#colour">Colour</a><a href="#type">Type</a><a href="#components">Components</a><a href="#effects">Glow &amp; motion</a><a href="#space">Space</a><a href="#voice">Voice</a><a href="#social">Social</a>
+  </nav>
+</header>
+
+<section id="brand">
+  <h2>Brand</h2>
+  <p>Breakdance Hero is a fast, friendly, mobile-first rhythm game set in a 1980s electro dance battle. The look is neon light on a night-time dancefloor: deep navy and plum fields, hot pink and electric cyan edges, big arcade lettering. It should feel like a block party, not a menu.</p>
+  <div class="row">
+    <div class="card"><svg class="logo-tile" viewBox="0 0 64 64" role="img" aria-label="Breakdance Hero icon"><rect width="64" height="64" rx="14" fill="#120a2a"/><path d="M32 8 52 30H40v22H24V30H12z" fill="#ff2d95" stroke="#17e1ff" stroke-width="3" stroke-linejoin="round"/></svg></div>
+    <div style="max-width:52ch">
+      <p><b>Icon.</b> A pink arrow with a cyan outline on <code>--surface</code> with 14/64 corner radius. The arrow is the game's core input and the mark. Source: <code>public/favicon.svg</code>.</p>
+      <p><b>Wordmark.</b> “BREAKDANCE” in pink Bungee with a pink glow, “HERO” on the next line in cyan with a cyan glow. Always two lines, always uppercase.</p>
+    </div>
+  </div>
+</section>
+
+<section id="colour">
+  <h2>Colour</h2>
+  <p>Neons are accents on dark surfaces. Never put a neon on another neon or use one as a large body-text colour. All tokens live in <code>src/design/tokens.css</code>.</p>
+  <h3>Brand neons</h3>
+  <div class="grid">
+    <div class="swatch"><i style="background:var(--pink)"></i><div><b>Pink</b><code>--pink</code><small>#ff2d95 · primary, CTA, score glow</small></div></div>
+    <div class="swatch"><i style="background:var(--cyan)"></i><div><b>Cyan</b><code>--cyan</code><small>#17e1ff · borders, selection, links</small></div></div>
+    <div class="swatch"><i style="background:var(--lime)"></i><div><b>Lime</b><code>--lime</code><small>#b6ff3d · perfect hits, success</small></div></div>
+    <div class="swatch"><i style="background:var(--amber)"></i><div><b>Amber</b><code>--amber</code><small>#ffb02e · grades, track title</small></div></div>
+    <div class="swatch"><i style="background:var(--yellow)"></i><div><b>Yellow</b><code>--yellow</code><small>#ffe14d · sparks, focus ring</small></div></div>
+  </div>
+  <h3>Night surfaces</h3>
+  <div class="grid">
+    <div class="swatch"><i style="background:var(--bg)"></i><div><b>Night</b><code>--bg</code><small>#07041a · page background</small></div></div>
+    <div class="swatch"><i style="background:var(--surface)"></i><div><b>Surface</b><code>--surface</code><small>#120a2a · cards, icon tile</small></div></div>
+    <div class="swatch"><i style="background:var(--plum)"></i><div><b>Plum</b><code>--plum</code><small>#2a0f45 · haze, gradients</small></div></div>
+  </div>
+  <h3>Text and contrast on Night</h3>
+  <div class="card"><table>
+    <tr><th>Token</th><th>Hex</th><th>Contrast</th><th>Use</th></tr>
+    <tr><td><code>--text</code></td><td>#ffffff</td><td>20.2:1</td><td>Primary text</td></tr>
+    <tr><td><code>--text-soft</code></td><td>#c9b8ff</td><td>11.3:1</td><td>Labels, secondary copy</td></tr>
+    <tr><td><code>--text-muted</code></td><td>#8f7fc9</td><td>5.8:1</td><td>Hints only, never essential info</td></tr>
+    <tr><td><code>--pink</code></td><td>#ff2d95</td><td>5.8:1</td><td>Accents, large text</td></tr>
+    <tr><td>White on pink</td><td>#fff on #ff2d95</td><td>3.5:1</td><td>Large display text only (the GO button is 26px Bungee)</td></tr>
+    <tr><td>Night on cyan</td><td>#07041a on #17e1ff</td><td>12.7:1</td><td>Selected buttons</td></tr>
+  </table></div>
+  <h3>Gradients</h3>
+  <div class="row"><div class="hype" style="max-width:none;flex:1;min-width:240px"><i style="width:100%"></i><b>HYPE</b></div></div>
+  <p class="t-hint" style="margin-top:var(--space-2)"><code>--gradient-hype</code> pink to amber to lime runs left to right as the crowd heats up. <code>--gradient-night</code> is the page backdrop.</p>
+</section>
+
+<section id="type">
+  <h2>Type</h2>
+  <p>Two families, both open-licence and self-hosted through Fontsource: <b>Bungee</b> for anything you shout, <b>Chakra Petch</b> for anything you read.</p>
+  <div class="card">
+    <div class="type-sample t-hero">Break it down</div>
+    <p class="t-hint">Hero · Bungee 400 · <code>--fs-hero</code> clamp(34px, 10vw, 64px) · line-height .95 · pink glow</p>
+    <div class="type-sample t-h2">Pick your battle</div>
+    <p class="t-hint">Heading · Bungee 400 · <code>--fs-h2</code> clamp(26px, 7vw, 40px)</p>
+    <div class="type-sample t-score">1,284,900</div>
+    <p class="t-hint">Score · Bungee 400 · <code>--fs-score</code> clamp(20px, 5vw, 30px) · pink glow</p>
+    <div class="type-sample t-grade">S</div>
+    <p class="t-hint">Grade · Bungee 400 · <code>--fs-grade</code> clamp(90px, 28vw, 150px) · amber glow</p>
+    <div class="type-sample">Tap the arrows, keep the beat, make the b-boy go off.</div>
+    <p class="t-hint">Body · Chakra Petch 500 · 16px / 1.55</p>
+    <div class="type-sample t-label">Cardboard Kings · 124 BPM</div>
+    <p class="t-hint">Label · Chakra Petch 500 · 13px · uppercase · tracking .12em · <code>--text-soft</code></p>
+    <div class="type-sample t-hint">Headphones recommended.</div>
+    <p class="t-hint">Hint · 12px · <code>--text-muted</code></p>
+  </div>
+</section>
+
+<section id="components">
+  <h2>Components</h2>
+  <h3>Buttons</h3>
+  <div class="row">
+    <button class="btn">Normal</button>
+    <button class="btn on">Selected</button>
+    <button class="btn small">Small</button>
+    <button class="btn" disabled>Disabled</button>
+    <button class="btn go">Go</button>
+  </div>
+  <p class="t-hint" style="margin-top:var(--space-2)">One <b>GO</b> per screen. Minimum tap target 40px (<code>--tap-min</code>). Keyboard focus shows a yellow 3px ring.</p>
+  <h3>Hype meter</h3>
+  <div class="hype"><i></i><b>HYPE</b></div>
+  <h3>Track card</h3>
+  <div class="track" style="display:inline-block"><b>Cardboard Kings</b><span class="t-label">124 BPM · original electro</span></div>
+  <h3>Results stats</h3>
+  <div class="stats" style="max-width:260px"><span>Perfect</span><span>142</span><span>Great</span><span>31</span><span>Max combo</span><span>96</span></div>
+</section>
+
+<section id="effects">
+  <h2>Glow &amp; motion</h2>
+  <p>Glow is the signature effect. Use it on one focal element per screen: the title, the score, the grade or the GO button. Everything else stays flat.</p>
+  <div class="row">
+    <div class="card" style="box-shadow:var(--glow-pink)"><code>--glow-pink</code></div>
+    <div class="card" style="box-shadow:var(--glow-cyan)"><code>--glow-cyan</code></div>
+    <div class="card" style="text-shadow:var(--glow-text-pink)"><code>--glow-text-pink</code></div>
+  </div>
+  <p style="margin-top:var(--space-3)">Motion is snappy and on the beat. Meter and state changes take <code>--dur-base</code> (150ms), UI transitions <code>--dur-fast</code> (120ms) with <code>--ease-snap</code>. Honour <code>prefers-reduced-motion</code> for decorative animation; never delay a hit judgement for an effect.</p>
+</section>
+
+<section id="space">
+  <h2>Space, radius, touch</h2>
+  <div class="card">
+    <div class="scale">
+      <div><i style="width:4px;height:4px"></i><small>1 · 4</small></div>
+      <div><i style="width:8px;height:8px"></i><small>2 · 8</small></div>
+      <div><i style="width:12px;height:12px"></i><small>3 · 12</small></div>
+      <div><i style="width:16px;height:16px"></i><small>4 · 16</small></div>
+      <div><i style="width:24px;height:24px"></i><small>5 · 24</small></div>
+      <div><i style="width:40px;height:40px"></i><small>6 · 40</small></div>
+    </div>
+    <p class="t-hint" style="margin-top:var(--space-3)">4px base (<code>--space-1</code> to <code>--space-6</code>). Radius: 8 small, 12 buttons, 14 cards. Respect <code>env(safe-area-inset-*)</code> on notched phones. The game is portrait-first and must also work in short landscape.</p>
+  </div>
+</section>
+
+<section id="voice">
+  <h2>Voice</h2>
+  <p>Hype-friendly, short, a little cheeky. Speak like the MC at a block party. Verbs first, no jargon, no guilt when you miss.</p>
+  <div class="do"><b>Do</b> · “Tap the arrows. Keep the beat.” “Nice windmill!” “Run it back?”</div>
+  <div class="dont"><b>Don't</b> · “You failed.” “Please select a difficulty level to proceed.” Corporate or sarcastic copy.</div>
+  <div class="do"><b>Do</b> · Use the game's own words: toprock, six-step, windmill, headspin, freeze, b-boy, battle, hype.</div>
+  <div class="dont"><b>Don't</b> · Use real breakers' names, real brands or other people's songs. The music is original.</div>
+</section>
+
+<section id="social">
+  <h2>Social and search assets</h2>
+  <p>Open Graph image: <code>public/og-image.png</code> (1200×630). Twitter/X card: <code>public/twitter-card.png</code> (1200×600). Both are generated from <code>design/social/</code> so they stay on brand when the palette changes. Page metadata lives in <code>index.html</code>.</p>
+  <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr))">
+    <img src="/og-image.png" alt="Open Graph image" style="width:100%;border-radius:var(--radius-lg);border:2px solid var(--border)" />
+    <img src="/twitter-card.png" alt="Twitter card image" style="width:100%;border-radius:var(--radius-lg);border:2px solid var(--border)" />
+  </div>
+</section>
+
+<footer>Breakdance Hero · breakdancehero.com · tokens in <code>src/design/tokens.css</code></footer>
+</div>
+</body>
+</html>

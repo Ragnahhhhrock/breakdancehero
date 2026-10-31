@@ -1,0 +1,11 @@
+{
+  "name": "Breakdance Hero",
+  "short_name": "Breakdance Hero",
+  "description": "A fun, free 1980s electro breakdancing rhythm game.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#07041a",
+  "theme_color": "#07041a",
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

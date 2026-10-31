@@ -1,7 +1,7 @@
 @import '@fontsource/bungee/400.css';
 @import '@fontsource/chakra-petch/500.css';
 @import '@fontsource/chakra-petch/700.css';
-:root { --pink:#ff2d95; --cyan:#17e1ff; --lime:#b6ff3d; --amber:#ffb02e; --bg:#07041a; }
+@import './design/tokens.css';
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin:0; height:100%; background:var(--bg); color:#fff; font-family:'Chakra Petch',system-ui,sans-serif; overflow:hidden; overscroll-behavior:none; touch-action:none; user-select:none; -webkit-user-select:none; }
 canvas { position:fixed; inset:0; width:100%; height:100%; display:block; }

@@ -1,0 +1,75 @@
+/* Breakdance Hero design tokens. Single source of truth for colour, type, space, radius, glow and motion.
+   Legacy short names (--pink, --cyan, --lime, --amber, --bg) are kept so existing styles keep working. */
+:root {
+  /* Brand neons */
+  --pink: #ff2d95;      /* primary: CTA, score glow, brand mark */
+  --cyan: #17e1ff;      /* secondary: borders, selected state, links */
+  --lime: #b6ff3d;      /* success: perfect hits, hype full */
+  --amber: #ffb02e;     /* highlight: grades, track title, warnings */
+  --yellow: #ffe14d;    /* sparks, combo flashes */
+
+  /* Night surfaces */
+  --bg: #07041a;        /* page background */
+  --surface: #120a2a;   /* cards, icon tile */
+  --plum: #2a0f45;      /* gradient mid-tone, dancefloor haze */
+  --scrim: rgba(7, 4, 26, 0.88);
+
+  /* Text */
+  --text: #ffffff;
+  --text-soft: #c9b8ff; /* labels, secondary copy (11.3:1 on --bg) */
+  --text-muted: #8f7fc9;/* hints only, never for essential info (5.8:1 on --bg) */
+
+  /* Semantic roles */
+  --color-primary: var(--pink);
+  --color-secondary: var(--cyan);
+  --color-success: var(--lime);
+  --color-highlight: var(--amber);
+  --color-danger: #ff4a6e;
+  --border: rgba(255, 255, 255, 0.18);
+  --fill-subtle: rgba(255, 255, 255, 0.05);
+
+  /* Hype gradient (pink to amber to lime) */
+  --gradient-hype: linear-gradient(90deg, var(--pink), var(--amber), var(--lime));
+  --gradient-night: radial-gradient(ellipse at 50% 20%, var(--plum), var(--bg) 70%);
+
+  /* Type */
+  --font-display: 'Bungee', system-ui, sans-serif;       /* titles, score, grades, big buttons */
+  --font-body: 'Chakra Petch', system-ui, sans-serif;    /* everything else */
+  --fs-hero: clamp(34px, 10vw, 64px);
+  --fs-h2: clamp(26px, 7vw, 40px);
+  --fs-score: clamp(20px, 5vw, 30px);
+  --fs-grade: clamp(90px, 28vw, 150px);
+  --fs-body: 16px;
+  --fs-small: 13px;
+  --fs-micro: 12px;
+  --tracking-label: 0.12em;
+  --tracking-btn: 0.08em;
+
+  /* Space (4px base) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 40px;
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 14px;
+
+  /* Glow (the signature effect: neon on a dark field) */
+  --glow-pink: 0 0 28px rgba(255, 45, 149, 0.7);
+  --glow-cyan: 0 0 18px rgba(23, 225, 255, 0.6);
+  --glow-text-pink: 0 0 18px var(--pink), 0 0 40px rgba(255, 45, 149, 0.5);
+  --glow-text-cyan: 0 0 18px var(--cyan);
+
+  /* Motion */
+  --ease-snap: cubic-bezier(0.2, 0.9, 0.3, 1);
+  --dur-fast: 120ms;
+  --dur-base: 150ms;
+  --dur-slow: 400ms;
+
+  /* Touch */
+  --tap-min: 40px;
+}

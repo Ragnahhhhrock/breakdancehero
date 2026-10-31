@@ -7,3 +7,5 @@ A mobile-first 1980s electro rhythm game. Tap the arrows in time and a b-boy bre
 - Charts generated from the track's own note data, so arrows always match what you hear (Easy, Normal, Hard)
 
 Dev: `npm install`, `npm run dev`. Tests: `npm test`.
+
+Design: tokens in `src/design/tokens.css`, living style guide at `/style-guide.html`. Social images (`public/og-image.png`, `public/twitter-card.png`) are generated from `design/social/` with `design/social/render.sh`.

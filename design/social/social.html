@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Breakdance Hero social card</title>
+<style>
+@font-face{font-family:Bungee;src:url(../../node_modules/@fontsource/bungee/files/bungee-latin-400-normal.woff2) format('woff2');}
+@font-face{font-family:'Chakra Petch';font-weight:500;src:url(../../node_modules/@fontsource/chakra-petch/files/chakra-petch-latin-500-normal.woff2) format('woff2');}
+@font-face{font-family:'Chakra Petch';font-weight:700;src:url(../../node_modules/@fontsource/chakra-petch/files/chakra-petch-latin-700-normal.woff2) format('woff2');}
+:root{--pink:#ff2d95;--cyan:#17e1ff;--lime:#b6ff3d;--amber:#ffb02e;--yellow:#ffe14d;--bg:#07041a;--surface:#120a2a;--plum:#2a0f45;--soft:#c9b8ff}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;background:var(--bg);overflow:hidden}
+.card{position:relative;width:1200px;height:var(--h,630px);overflow:hidden;font-family:'Chakra Petch',sans-serif;color:#fff;
+  background:radial-gradient(ellipse 70% 90% at 78% 40%,#3a1260 0%,var(--plum) 35%,var(--bg) 75%)}
+.floor{position:absolute;left:0;right:0;bottom:0;height:34%;opacity:.55;
+  background:
+    repeating-linear-gradient(90deg,rgba(23,225,255,.35) 0 2px,transparent 2px 80px),
+    repeating-linear-gradient(0deg,rgba(255,45,149,.35) 0 2px,transparent 2px 46px);
+  transform:perspective(380px) rotateX(58deg);transform-origin:50% 100%;
+  -webkit-mask-image:linear-gradient(to top,#000 30%,transparent);mask-image:linear-gradient(to top,#000 30%,transparent)}
+.glow{position:absolute;border-radius:50%;filter:blur(90px);opacity:.55}
+.g1{width:420px;height:420px;background:var(--pink);right:60px;top:-120px}
+.g2{width:380px;height:380px;background:var(--cyan);right:-140px;bottom:-140px;opacity:.35}
+.left{position:absolute;left:72px;top:0;bottom:0;width:640px;display:flex;flex-direction:column;justify-content:center;gap:22px}
+.eyebrow{font-weight:700;font-size:22px;letter-spacing:.2em;text-transform:uppercase;color:var(--soft);display:flex;align-items:center;gap:14px}
+.eyebrow i{width:46px;height:4px;background:var(--lime);border-radius:2px;box-shadow:0 0 14px var(--lime)}
+h1{margin:0;font:400 86px/.92 Bungee,sans-serif;text-shadow:0 0 22px var(--pink),0 0 56px rgba(255,45,149,.55)}
+h1 span{display:block;color:var(--cyan);text-shadow:0 0 22px var(--cyan),0 0 56px rgba(23,225,255,.45);font-size:136px}
+.tag{font-weight:700;font-size:32px;line-height:1.25;max-width:600px}
+.tag b{color:var(--amber)}
+.chips{display:flex;gap:14px;margin-top:4px}
+.chip{font-weight:700;font-size:20px;letter-spacing:.1em;text-transform:uppercase;padding:9px 18px;border-radius:12px;border:2px solid var(--cyan);background:rgba(23,225,255,.1)}
+.chip.p{border-color:var(--pink);background:var(--pink);box-shadow:0 0 24px rgba(255,45,149,.7);font-family:Bungee;font-weight:400;letter-spacing:.04em}
+.url{position:absolute;left:72px;bottom:34px;font-weight:700;font-size:22px;letter-spacing:.14em;color:var(--soft)}
+.right{position:absolute;right:56px;top:0;bottom:0;width:430px}
+.right svg{position:absolute;inset:0;width:100%;height:100%}
+.hud{position:absolute;right:64px;top:44px;display:flex;align-items:center;gap:14px}
+.score{font:400 34px Bungee;text-shadow:0 0 12px var(--pink)}
+.hype{position:relative;width:170px;height:16px;border:2px solid var(--cyan);border-radius:9px;overflow:hidden;background:rgba(0,0,0,.45)}
+.hype i{position:absolute;inset:0;width:72%;background:linear-gradient(90deg,var(--pink),var(--amber),var(--lime))}
+</style></head>
+<body>
+<div class="card" id="card">
+  <div class="glow g1"></div><div class="glow g2"></div><div class="floor"></div>
+  <div class="left">
+    <div class="eyebrow"><i></i>Free rhythm game</div>
+    <h1>Breakdance<span>Hero</span></h1>
+    <div class="tag">Tap the arrows, hit the beat and make the <b>b-boy go off</b>.</div>
+    <div class="chips"><div class="chip">80s electro</div><div class="chip">Play on your phone</div></div>
+  </div>
+  <div class="url">BREAKDANCEHERO.COM</div>
+  <div class="hud"><div class="score">128,490</div><div class="hype"><i></i></div></div>
+  <div class="right">
+    <svg viewBox="0 0 430 630" preserveAspectRatio="xMidYMid slice" fill="none">
+      <defs>
+        <filter id="gl" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <path id="arr" d="M0-34 34-2H14V34H-14V-2H-34z" stroke-linejoin="round"/>
+      </defs>
+      <!-- lane arrows: falling notes + hit line -->
+      <g filter="url(#gl)" stroke-width="5">
+        <use href="#arr" transform="translate(70 520) rotate(-90)" stroke="#ff2d95" fill="rgba(255,45,149,.18)"/>
+        <use href="#arr" transform="translate(167 520) rotate(180)" stroke="#17e1ff" fill="rgba(23,225,255,.18)"/>
+        <use href="#arr" transform="translate(264 520)" stroke="#b6ff3d" fill="rgba(182,255,61,.18)"/>
+        <use href="#arr" transform="translate(361 520) rotate(90)" stroke="#ffb02e" fill="rgba(255,176,46,.18)"/>
+      </g>
+      <g filter="url(#gl)" stroke="none">
+        <use href="#arr" transform="translate(167 392) rotate(180)" fill="#17e1ff"/>
+        <use href="#arr" transform="translate(361 330) rotate(90)" fill="#ffb02e"/>
+        <use href="#arr" transform="translate(264 456)" fill="#b6ff3d"/>
+      </g>
+      <text x="215" y="590" text-anchor="middle" font-family="Bungee" font-size="30" fill="#b6ff3d" filter="url(#gl)">PERFECT!</text>
+      <!-- b-boy headspin: inverted body, V legs, spin ring -->
+      <g filter="url(#gl)" transform="translate(215 238)">
+        <ellipse cx="0" cy="92" rx="118" ry="22" stroke="#ff2d95" stroke-width="5" stroke-dasharray="26 18" opacity=".9"/>
+        <ellipse cx="0" cy="92" rx="150" ry="30" stroke="#17e1ff" stroke-width="3" stroke-dasharray="14 22" opacity=".6"/>
+        <g stroke="#ffffff" stroke-width="16" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M0 72V4"/>
+          <path d="M0 8-52-76"/>
+          <path d="M0 8 52-70"/>
+          <path d="M-8 52-48 62"/>
+          <path d="M8 52 48 62"/>
+        </g>
+        <circle cx="0" cy="90" r="22" fill="#ffffff"/>
+        <path d="M-24 82Q0 56 24 82" stroke="#ff2d95" stroke-width="10" stroke-linecap="round"/>
+      </g>
+    </svg>
+  </div>
+</div>
+</body></html>
