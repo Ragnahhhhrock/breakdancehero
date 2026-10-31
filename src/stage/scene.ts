@@ -63,19 +63,26 @@ function wallTexture(): THREE.CanvasTexture {
   // graffiti stripes
   const stripe = (y: number, col: string) => { g.fillStyle = col; g.fillRect(0, y, W, 8); };
   stripe(300, '#ff2d95'); stripe(314, '#17e1ff'); stripe(328, '#ffe14d');
-  // neon sign
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+function signTexture(): THREE.CanvasTexture {
+  const c = document.createElement('canvas');
+  c.width = 1024; c.height = 512;
+  const g = c.getContext('2d')!;
   g.textAlign = 'center';
   g.textBaseline = 'middle';
-  g.font = '800 128px Bungee, Impact, sans-serif';
+  g.font = '400 122px Bungee, Impact, sans-serif';
   g.shadowColor = '#ff2d95';
   g.shadowBlur = 40;
   g.fillStyle = '#ffd1ea';
-  g.fillText('BREAKDANCE', W / 2, 140);
+  g.fillText('BREAKDANCE', 512, 150);
   g.shadowColor = '#17e1ff';
   g.fillStyle = '#d6f8ff';
-  g.font = '800 150px Bungee, Impact, sans-serif';
-  g.fillText('HERO', W / 2, 262);
-  g.shadowBlur = 0;
+  g.font = '400 190px Bungee, Impact, sans-serif';
+  g.fillText('HERO', 512, 340);
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
   return t;
@@ -183,6 +190,14 @@ export class Stage {
     );
     wall.position.set(0, 3.4, -6.2);
     this.scene.add(wall);
+    const sign = new THREE.Mesh(
+      new THREE.PlaneGeometry(5.6, 2.8),
+      new THREE.MeshBasicMaterial({ map: signTexture(), transparent: true, depthWrite: false }),
+    );
+    sign.position.set(0, 4.3, -6.1);
+    this.scene.add(sign);
+    // rebuild the lettering once the webfont is ready
+    void document.fonts?.load('122px Bungee').then(() => { (sign.material as THREE.MeshBasicMaterial).map = signTexture(); (sign.material as THREE.MeshBasicMaterial).needsUpdate = true; });
     // side pillars with neon tubes
     const tubeCols = [0xff2d95, 0x17e1ff, 0xffe14d, 0x9d6bff];
     for (let i = 0; i < 8; i++) {
@@ -334,8 +349,9 @@ export class Stage {
   }
 
   private updateFloor(s: StageState, ph: number) {
-    const pal = PALETTES[Math.floor(s.bar / 8) % PALETTES.length];
-    const mode = Math.floor(s.bar / 2) % 3;
+    const mod = (n: number, m: number) => ((n % m) + m) % m;
+    const pal = PALETTES[mod(Math.floor(s.bar / 8), PALETTES.length)];
+    const mode = mod(Math.floor(s.bar / 2), 3);
     const beatIdx = Math.floor(s.beat);
     const pulse = Math.exp(-ph * 4.5);
     const base = 0.16 + 0.12 * s.energy;

@@ -372,10 +372,10 @@ function play(b: Bus, e: Ev) {
   }
 }
 
-export async function renderTrack(track: TrackData, sampleRate: number): Promise<AudioBuffer> {
+async function renderSegment(track: TrackData, events: Ev[], sampleRate: number, dur: number): Promise<AudioBuffer> {
   const Offline: typeof OfflineAudioContext =
     window.OfflineAudioContext || (window as unknown as { webkitOfflineAudioContext: typeof OfflineAudioContext }).webkitOfflineAudioContext;
-  const ctx = new Offline(2, Math.ceil(track.duration * sampleRate), sampleRate);
+  const ctx = new Offline(2, Math.ceil(dur * sampleRate), sampleRate);
 
   const out = ctx.createGain();
   out.gain.value = 0.9;
@@ -419,7 +419,7 @@ export async function renderTrack(track: TrackData, sampleRate: number): Promise
   const bus: Bus = { ctx, drums, bass: bassBus, lead: leadBus, pad: padBus, fx, noise: noiseBuffer(ctx), step: track.step };
 
   // sidechain-style duck: the bass and pads dip on every kick
-  for (const e of track.events) {
+  for (const e of events) {
     if (e.inst !== 'kick') continue;
     for (const dest of [bassBus.gain, padBus.gain]) {
       const base = dest === bassBus.gain ? 0.9 : 0.7;
@@ -428,10 +428,43 @@ export async function renderTrack(track: TrackData, sampleRate: number): Promise
     }
   }
 
-  for (const e of track.events) play(bus, e);
+  for (const e of events) play(bus, e);
 
-  const buf = await ctx.startRendering();
+  return ctx.startRendering();
+}
 
+/**
+ * Renders in short chunks with a pre-roll. A single long offline context keeps every note's nodes alive for the
+ * whole song (minutes of CPU on a phone); chunking cuts the render time by more than an order of magnitude.
+ */
+export async function renderTrack(track: TrackData, sampleRate: number, onProgress?: (f: number) => void): Promise<AudioBuffer> {
+  const Offline: typeof OfflineAudioContext =
+    window.OfflineAudioContext || (window as unknown as { webkitOfflineAudioContext: typeof OfflineAudioContext }).webkitOfflineAudioContext;
+  const total = Math.ceil(track.duration * sampleRate);
+  const buf = new Offline(2, total, sampleRate).createBuffer(2, total, sampleRate);
+  const bar = track.step * 16;
+  const chunk = bar * 1;
+  const pre = 2.0;
+  const echoes = new Set(['snare', 'clap', 'cow', 'lead', 'arp', 'zap', 'hey']);
+  for (let start = 0; start < track.duration; start += chunk) {
+    const end = Math.min(track.duration, start + chunk);
+    const from = Math.max(0, start - pre);
+    // pre-roll events are only replayed if they still sound (or echo) inside this chunk
+    const evs = track.events.filter((e) => e.t < end && (e.t >= start - 1e-6
+      || (e.t >= from && (e.t + (e.len ?? 0.3) > start || (echoes.has(e.inst) && e.t > start - 1.1))))).map((e) => ({ ...e, t: e.t - from }));
+    const seg = await renderSegment(track, evs, sampleRate, end - from);
+    const skip = Math.round((start - from) * sampleRate);
+    const n = Math.min(Math.round((end - start) * sampleRate), total - Math.round(start * sampleRate));
+    for (let c = 0; c < 2; c++) {
+      buf.getChannelData(c).set(seg.getChannelData(c).subarray(skip, skip + n), Math.round(start * sampleRate));
+    }
+    onProgress?.(end / track.duration);
+  }
+  normalise(buf);
+  return buf;
+}
+
+function normalise(buf: AudioBuffer) {
   // normalise to a safe peak
   let peak = 0;
   for (let c = 0; c < buf.numberOfChannels; c++) {
@@ -448,5 +481,4 @@ export async function renderTrack(track: TrackData, sampleRate: number): Promise
       for (let i = 0; i < d.length; i++) d[i] *= k;
     }
   }
-  return buf;
 }

@@ -61,7 +61,7 @@ async function play(d: Difficulty) {
 }
 
 toMenu();
-game.load().then(() => { loaded = true; menu?.ready(); }).catch((e) => { console.error(e); });
+game.load((f) => menu?.progress(f)).then(() => { loaded = true; menu?.ready(); }).catch((e) => { console.error(e); });
 
 // ---- input
 const keys: Record<string, number> = { ArrowLeft: 0, KeyA: 0, ArrowDown: 1, KeyS: 1, ArrowUp: 2, KeyW: 2, ArrowRight: 3, KeyD: 3 };
@@ -118,3 +118,4 @@ function frame(now: number) {
   }
 }
 requestAnimationFrame(frame);
+(window as unknown as { __bdh: unknown }).__bdh = { stage, game, highway };

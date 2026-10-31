@@ -44,6 +44,10 @@ export function showMenu(game: Game, ready: boolean, onPlay: (d: Difficulty) => 
   root().append(p);
   sync();
   return {
+    progress(f: number) {
+      const b = p.querySelector<HTMLButtonElement>('#play')!;
+      if (b.disabled) b.textContent = `Loading beats ${Math.round(f * 100)}%`;
+    },
     ready() {
       const b = p.querySelector<HTMLButtonElement>('#play')!;
       b.disabled = false;

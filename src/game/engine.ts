@@ -76,8 +76,8 @@ export class Game {
     try { this.tapSound = localStorage.getItem('bdh.tap') === '1'; } catch { /* ignore */ }
   }
 
-  async load(): Promise<void> {
-    this.buffer = await renderTrack(this.track, this.ctx.sampleRate);
+  async load(onProgress?: (f: number) => void): Promise<void> {
+    this.buffer = await renderTrack(this.track, this.ctx.sampleRate, onProgress);
   }
 
   setOffset(sec: number) {
