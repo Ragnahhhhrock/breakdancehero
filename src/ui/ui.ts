@@ -1,6 +1,6 @@
 import { DIFFICULTIES, type Difficulty } from '../game/chart';
 import type { Game, Result } from '../game/engine';
-import { addScore, cleanName, loadScores, rankFor, type ScoreEntry } from '../game/scores';
+import { addScore, cleanName, fetchScores, loadScores, rankFor, submitScore, type ScoreEntry } from '../game/scores';
 import { track } from '../analytics';
 
 const root = () => document.getElementById('ui')!;
@@ -88,7 +88,13 @@ export function showScores(initial: Difficulty, onBack: () => void) {
   `);
   const sync = () => {
     p.querySelectorAll<HTMLButtonElement>('#sd .btn').forEach((b) => b.classList.toggle('on', b.dataset.d === diff));
-    p.querySelector('#tbl')!.innerHTML = tableHTML(loadScores(diff));
+    const tbl = p.querySelector('#tbl')!;
+    const want = diff;
+    tbl.innerHTML = '<div class="sub">Loading…</div>';
+    void fetchScores(want).then((list) => {
+      if (want !== diff) return; // tab changed while loading
+      tbl.innerHTML = list ? `<div class="sub">All players · top 10</div>${tableHTML(list)}` : `<div class="sub">Offline · this device only</div>${tableHTML(loadScores(want))}`;
+    });
   };
   p.querySelectorAll<HTMLButtonElement>('#sd .btn').forEach((b) => b.addEventListener('click', () => { diff = b.dataset.d as Difficulty; sync(); }));
   p.querySelector('#back')!.addEventListener('click', onBack);
@@ -99,7 +105,6 @@ export function showScores(initial: Difficulty, onBack: () => void) {
 export function showResults(r: Result, onRetry: () => void, onMenu: () => void) {
   clearUI();
   const c = r.counts;
-  const rank = rankFor(loadScores(r.difficulty), r.score);
   const p = el(`
     <div class="sub">${r.difficulty} · results</div>
     <div class="grade">${r.grade}</div>
@@ -117,24 +122,36 @@ export function showResults(r: Result, onRetry: () => void, onMenu: () => void) 
     <div class="row"><button class="btn go" id="again">Again</button><button class="btn" id="menu">Menu</button></div>
   `);
   const hs = p.querySelector('#hs')!;
-  const showTable = (list: ScoreEntry[], highlight = -1) => { hs.innerHTML = `<div class="sub">${r.difficulty} · top 10</div>${tableHTML(list, highlight)}`; };
-  if (rank === null) {
-    showTable(loadScores(r.difficulty));
-  } else {
+  const showTable = (list: ScoreEntry[], highlight = -1, online = true) => {
+    hs.innerHTML = `<div class="sub">${r.difficulty} · ${online ? 'all players · ' : 'offline · '}top 10</div>${tableHTML(list, highlight)}`;
+  };
+  hs.innerHTML = '<div class="sub">Loading scores…</div>';
+  void fetchScores(r.difficulty).then((global) => {
+    const online = global !== null;
+    const list = global ?? loadScores(r.difficulty);
+    const rank = rankFor(list, r.score);
+    if (rank === null) { showTable(list, -1, online); return; }
     hs.innerHTML = `<div class="sub">★ Rank #${rank} — enter your initials ★</div>
       <div class="row"><input id="ini" maxlength="3" value="${localStorage.getItem('bdh.name') ?? ''}" placeholder="AAA" autocomplete="off" autocapitalize="characters" spellcheck="false" /><button class="btn small" id="save">Save</button></div>`;
     const input = hs.querySelector<HTMLInputElement>('#ini')!;
-    const save = () => {
+    let saving = false;
+    const save = async () => {
+      if (saving) return;
+      saving = true;
       const name = cleanName(input.value);
       try { localStorage.setItem('bdh.name', name); } catch { /* ignore */ }
-      const list = addScore(r.difficulty, { name, score: r.score, grade: r.grade, accuracy: r.accuracy, maxCombo: r.maxCombo, date: Date.now() });
-      track('high_score_saved', { level_name: r.difficulty, rank, score: r.score });
-      showTable(list, rank - 1);
+      const entry = { name, score: r.score, grade: r.grade, accuracy: r.accuracy, maxCombo: r.maxCombo, date: Date.now() };
+      const local = addScore(r.difficulty, entry); // keep a personal copy for offline play
+      hs.innerHTML = '<div class="sub">Saving…</div>';
+      const res = await submitScore(r.difficulty, entry);
+      track('high_score_saved', { level_name: r.difficulty, rank, score: r.score, global: !!res });
+      if (res) showTable(res.scores, res.rank ? res.rank - 1 : -1, true);
+      else showTable(local, rank - 1, false);
     };
-    hs.querySelector('#save')!.addEventListener('click', save);
-    input.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') save(); });
+    hs.querySelector('#save')!.addEventListener('click', () => void save());
+    input.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') void save(); });
     setTimeout(() => input.focus(), 50);
-  }
+  });
   p.querySelector('#again')!.addEventListener('click', () => { track('play_again', { level_name: r.difficulty }); onRetry(); });
   p.querySelector('#menu')!.addEventListener('click', () => { track('results_to_menu', { level_name: r.difficulty }); onMenu(); });
   root().append(p);

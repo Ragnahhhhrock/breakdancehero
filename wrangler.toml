@@ -1,0 +1,16 @@
+name = "breakdancehero-scores"
+main = "worker/index.ts"
+compatibility_date = "2026-10-01"
+workers_dev = true
+
+# Serve the API at https://api.breakdancehero.com (domain is on Cloudflare DNS).
+routes = [{ pattern = "api.breakdancehero.com", custom_domain = true }]
+
+[vars]
+ALLOWED_ORIGINS = "https://breakdancehero.com,https://www.breakdancehero.com"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "breakdancehero-scores"
+# Run `npx wrangler d1 create breakdancehero-scores` and paste the printed id here.
+database_id = "REPLACE_WITH_D1_DATABASE_ID"

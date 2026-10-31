@@ -47,3 +47,39 @@ export function addScore(d: Difficulty, entry: ScoreEntry): ScoreEntry[] {
   try { localStorage.setItem(key(d), JSON.stringify(next)); } catch { /* ignore */ }
   return next;
 }
+
+/* ---- Global (all-players) high scores, served by the Cloudflare Worker in /worker ---- */
+
+const API_BASE: string = import.meta.env.VITE_API_URL ?? 'https://api.breakdancehero.com';
+const TIMEOUT_MS = 6000;
+
+async function api(path: string, init?: RequestInit): Promise<Response> {
+  const ctl = new AbortController();
+  const t = setTimeout(() => ctl.abort(), TIMEOUT_MS);
+  try { return await fetch(API_BASE + path, { ...init, signal: ctl.signal }); } finally { clearTimeout(t); }
+}
+
+/** Global top 10 for a difficulty, or null if the server can't be reached. */
+export async function fetchScores(d: Difficulty): Promise<ScoreEntry[] | null> {
+  try {
+    const res = await api(`/api/scores?difficulty=${d}`);
+    if (!res.ok) return null;
+    const data = (await res.json()) as { scores?: unknown };
+    return Array.isArray(data.scores) ? sortScores(data.scores.filter(isEntry)) : null;
+  } catch { return null; }
+}
+
+/** Submit a score to the global table. Returns the fresh top 10 and this score's rank, or null on failure. */
+export async function submitScore(d: Difficulty, entry: ScoreEntry): Promise<{ scores: ScoreEntry[]; rank: number | null } | null> {
+  try {
+    const res = await api('/api/scores', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ difficulty: d, name: cleanName(entry.name), score: entry.score, grade: entry.grade, accuracy: entry.accuracy, maxCombo: entry.maxCombo }),
+    });
+    if (!res.ok) return null;
+    const data = (await res.json()) as { scores?: unknown; rank?: number | null };
+    if (!Array.isArray(data.scores)) return null;
+    return { scores: sortScores(data.scores.filter(isEntry)), rank: typeof data.rank === 'number' ? data.rank : null };
+  } catch { return null; }
+}
