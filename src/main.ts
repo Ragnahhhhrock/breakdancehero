@@ -4,6 +4,7 @@ import { Game, type Result } from './game/engine';
 import { Highway } from './game/highway';
 import type { Difficulty } from './game/chart';
 import { clearUI, showMenu, showPause, showResults, showScores } from './ui/ui';
+import { track } from './analytics';
 
 const stageCanvas = document.getElementById('stage') as HTMLCanvasElement;
 const hwCanvas = document.getElementById('hw') as HTMLCanvasElement;
@@ -43,8 +44,11 @@ const game = new Game({
   onHit(lane, grade, delta) { highway.hit(lane, grade, delta); stage.hit(lane, grade); },
   onMiss(lane) { highway.miss(); stage.miss(); void lane; },
   onStray(lane) { highway.stray(lane); },
-  onMilestone(c) { highway.announce(`${c} COMBO!`); stage.burst(); },
-  onEnd(r: Result) { hud.hidden = true; setTimeout(() => showResults(r, () => play(r.difficulty), toMenu), 1400); },
+  onMilestone(c) { highway.announce(`${c} COMBO!`); stage.burst(); track('combo_milestone', { combo: c, level_name: game.difficulty }); },
+  onEnd(r: Result) {
+    track('level_end', { level_name: r.difficulty, success: true, score: r.score, grade: r.grade, accuracy: Math.round(r.accuracy * 100), max_combo: r.maxCombo, misses: r.counts.miss, new_best: r.newBest });
+    track('post_score', { score: r.score, level: r.difficulty });
+    hud.hidden = true; setTimeout(() => showResults(r, () => play(r.difficulty), toMenu), 1400); },
 });
 
 let menu: ReturnType<typeof showMenu> | null = null;
@@ -57,11 +61,12 @@ function toMenu() {
 async function play(d: Difficulty) {
   clearUI();
   hud.hidden = false;
+  track('level_start', { level_name: d });
   await game.start(d);
 }
 
 toMenu();
-game.load((f) => menu?.progress(f)).then(() => { loaded = true; menu?.ready(); }).catch((e) => { console.error(e); });
+game.load((f) => menu?.progress(f)).then(() => { loaded = true; menu?.ready(); track('game_loaded', { load_ms: Math.round(performance.now()) }); }).catch((e) => { console.error(e); });
 
 // ---- input
 const keys: Record<string, number> = { ArrowLeft: 0, KeyA: 0, ArrowDown: 1, KeyS: 1, ArrowUp: 2, KeyW: 2, ArrowRight: 3, KeyD: 3 };
@@ -80,7 +85,11 @@ function togglePause() {
   if (game.phase === 'paused') { clearUI(); game.resume(); }
   else if (game.phase === 'playing' || game.phase === 'countin') {
     game.pause();
-    showPause(() => { clearUI(); game.resume(); }, toMenu);
+    track('game_pause', { level_name: game.difficulty, score: game.score });
+    showPause(
+      () => { clearUI(); track('game_resume', { level_name: game.difficulty }); game.resume(); },
+      () => { track('level_quit', { level_name: game.difficulty, score: game.score, max_combo: game.maxCombo }); toMenu(); },
+    );
   }
 }
 document.getElementById('pausebtn')!.addEventListener('click', togglePause);

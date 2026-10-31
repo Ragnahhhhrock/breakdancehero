@@ -1,6 +1,7 @@
 import { DIFFICULTIES, type Difficulty } from '../game/chart';
 import type { Game, Result } from '../game/engine';
 import { addScore, cleanName, loadScores, rankFor, type ScoreEntry } from '../game/scores';
+import { track } from '../analytics';
 
 const root = () => document.getElementById('ui')!;
 
@@ -39,13 +40,16 @@ export function showMenu(game: Game, ready: boolean, onPlay: (d: Difficulty) => 
   p.querySelectorAll<HTMLButtonElement>('#diffs .btn').forEach((b) => b.addEventListener('click', () => {
     diff = b.dataset.d as Difficulty;
     try { localStorage.setItem('bdh.diff', diff); } catch { /* ignore */ }
+    track('difficulty_select', { level_name: diff });
     sync();
   }));
-  p.querySelector('#tapsnd')!.addEventListener('click', () => { game.setTapSound(!game.tapSound); sync(); });
-  p.querySelector('#offm')!.addEventListener('click', () => { game.setOffset(game.offset - 0.01); sync(); });
-  p.querySelector('#offp')!.addEventListener('click', () => { game.setOffset(game.offset + 0.01); sync(); });
+  p.querySelector('#tapsnd')!.addEventListener('click', () => { game.setTapSound(!game.tapSound); track('setting_change', { setting: 'tap_sound', value: game.tapSound ? 'on' : 'off' }); sync(); });
+  p.querySelector('#offm')!.addEventListener('click', () => { game.setOffset(game.offset - 0.01); track('setting_change', { setting: 'timing_offset_ms', value: Math.round(game.offset * 1000) }); sync(); });
+  p.querySelector('#offp')!.addEventListener('click', () => { game.setOffset(game.offset + 0.01); track('setting_change', { setting: 'timing_offset_ms', value: Math.round(game.offset * 1000) }); sync(); });
   p.querySelector('#play')!.addEventListener('click', () => onPlay(diff));
-  p.querySelector('#scores')!.addEventListener('click', () => onScores(diff));
+  p.querySelector('#scores')!.addEventListener('click', () => { track('view_high_scores', { level_name: diff }); onScores(diff); });
+  p.querySelector('.coffee')!.addEventListener('click', () => track('coffee_click', { location: 'menu' }));
+  p.querySelector('.credit a')!.addEventListener('click', () => track('creator_link_click', { location: 'menu' }));
   root().append(p);
   sync();
   return {
@@ -128,13 +132,14 @@ export function showResults(r: Result, onRetry: () => void, onMenu: () => void) 
       const name = cleanName(input.value);
       try { localStorage.setItem('bdh.name', name); } catch { /* ignore */ }
       const list = addScore(r.difficulty, { name, score: r.score, grade: r.grade, accuracy: r.accuracy, maxCombo: r.maxCombo, date: Date.now() });
+      track('high_score_saved', { level_name: r.difficulty, rank, score: r.score });
       showTable(list, rank - 1);
     };
     hs.querySelector('#save')!.addEventListener('click', save);
     input.addEventListener('keydown', (e) => { e.stopPropagation(); if (e.key === 'Enter') save(); });
     setTimeout(() => input.focus(), 50);
   }
-  p.querySelector('#again')!.addEventListener('click', onRetry);
-  p.querySelector('#menu')!.addEventListener('click', onMenu);
+  p.querySelector('#again')!.addEventListener('click', () => { track('play_again', { level_name: r.difficulty }); onRetry(); });
+  p.querySelector('#menu')!.addEventListener('click', () => { track('results_to_menu', { level_name: r.difficulty }); onMenu(); });
   root().append(p);
 }
