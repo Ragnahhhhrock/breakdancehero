@@ -51,8 +51,6 @@ export class Game {
   maxCombo = 0;
   hype = 0.35;
   counts: Record<Grade | 'miss', number> = { perfect: 0, great: 0, good: 0, miss: 0 };
-  /** user timing offset in seconds (+ means the arrows come later) */
-  offset = 0;
   tapSound = false;
 
   private startAt = 0;
@@ -72,7 +70,6 @@ export class Game {
     this.ctx = new AC({ latencyHint: 'interactive' });
     this.master = this.ctx.createGain();
     this.master.connect(this.ctx.destination);
-    try { this.offset = parseFloat(localStorage.getItem('bdh.offset') ?? '0') || 0; } catch { /* ignore */ }
     try { this.tapSound = localStorage.getItem('bdh.tap') === '1'; } catch { /* ignore */ }
     this.installUnlock();
   }
@@ -128,11 +125,6 @@ export class Game {
     this.buffer = await renderTrack(this.track, this.ctx.sampleRate, onProgress);
   }
 
-  setOffset(sec: number) {
-    this.offset = Math.max(-0.3, Math.min(0.3, sec));
-    try { localStorage.setItem('bdh.offset', String(this.offset)); } catch { /* ignore */ }
-  }
-
   setTapSound(on: boolean) {
     this.tapSound = on;
     try { localStorage.setItem('bdh.tap', on ? '1' : '0'); } catch { /* ignore */ }
@@ -153,7 +145,7 @@ export class Game {
     if (c !== this.lastCtx) { this.lastCtx = c; this.lastPerf = p; }
     const extra = this.ctx.state === 'running' ? Math.min((p - this.lastPerf) / 1000, 0.04) : 0;
     const lat = (this.ctx.outputLatency || 0) || (this.ctx.baseLatency || 0);
-    return c + extra - this.startAt - lat - this.offset;
+    return c + extra - this.startAt - lat;
   }
 
   private lastCtxPos() { return this.ctx.currentTime - this.startAt; }

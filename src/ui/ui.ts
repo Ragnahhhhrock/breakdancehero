@@ -25,9 +25,8 @@ export function showMenu(game: Game, ready: boolean, onPlay: (d: Difficulty) => 
     <div class="best" id="best"></div>
     <button class="btn go" id="play" ${ready ? '' : 'disabled'}>${ready ? 'Play' : 'Loading beats…'}</button>
     <button class="btn" id="scores">High scores</button>
-    <div class="settings"><button class="btn small" id="tapsnd"></button>
-      Timing <button class="btn small" id="offm">−</button><b id="offv"></b><button class="btn small" id="offp">+</button></div>
-    <div class="hint">Tap the arrows in the lanes as they hit the line. Keys: ← ↓ ↑ → or A S W D. Headphones recommended. If hits feel late, nudge Timing.</div>
+    <div class="settings"><button class="btn small" id="tapsnd"></button></div>
+    <div class="hint">Tap the arrows in the lanes as they hit the line. Keys: ← ↓ ↑ → or A S W D. Headphones recommended.</div>
     <a class="coffee" href="https://buy.stripe.com/fZu00b521d4p4gU0UcaAw05" target="_blank" rel="noopener noreferrer">☕ Buy me a coffee · $5</a>
     <div class="credit">Another <a href="https://malgordon.com" target="_blank" rel="noopener noreferrer">Mal Gordon</a> creation</div>
   `);
@@ -35,7 +34,6 @@ export function showMenu(game: Game, ready: boolean, onPlay: (d: Difficulty) => 
     p.querySelectorAll<HTMLButtonElement>('#diffs .btn').forEach((b) => b.classList.toggle('on', b.dataset.d === diff));
     p.querySelector('#best')!.textContent = `Best: ${game.best(diff).toLocaleString()}`;
     p.querySelector('#tapsnd')!.textContent = `Tap sound: ${game.tapSound ? 'on' : 'off'}`;
-    p.querySelector('#offv')!.textContent = `${Math.round(game.offset * 1000)} ms`;
   };
   p.querySelectorAll<HTMLButtonElement>('#diffs .btn').forEach((b) => b.addEventListener('click', () => {
     diff = b.dataset.d as Difficulty;
@@ -44,8 +42,6 @@ export function showMenu(game: Game, ready: boolean, onPlay: (d: Difficulty) => 
     sync();
   }));
   p.querySelector('#tapsnd')!.addEventListener('click', () => { game.setTapSound(!game.tapSound); track('setting_change', { setting: 'tap_sound', value: game.tapSound ? 'on' : 'off' }); sync(); });
-  p.querySelector('#offm')!.addEventListener('click', () => { game.setOffset(game.offset - 0.01); track('setting_change', { setting: 'timing_offset_ms', value: Math.round(game.offset * 1000) }); sync(); });
-  p.querySelector('#offp')!.addEventListener('click', () => { game.setOffset(game.offset + 0.01); track('setting_change', { setting: 'timing_offset_ms', value: Math.round(game.offset * 1000) }); sync(); });
   p.querySelector('#play')!.addEventListener('click', () => onPlay(diff));
   p.querySelector('#scores')!.addEventListener('click', () => { track('view_high_scores', { level_name: diff }); onScores(diff); });
   p.querySelector('.coffee')!.addEventListener('click', () => track('coffee_click', { location: 'menu' }));
