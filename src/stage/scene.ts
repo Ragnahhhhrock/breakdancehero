@@ -362,7 +362,8 @@ export class Stage {
       g.add(halo);
       this.neonHalos.push(mat);
     }
-    g.position.set(-4.7, 2.7, -6.04);
+    // z is far enough forward that the tilted sign's far edge (±W/2·sin(tilt) ≈ 0.35) clears the back wall at z=-6.2
+    g.position.set(-4.7, 2.7, -5.7);
     g.rotation.y = 0.18;
     this.scene.add(g);
     // redraw the lettering once the script font has loaded
