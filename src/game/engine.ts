@@ -38,6 +38,28 @@ export interface Callbacks {
 
 const COUNT_IN_BEATS = 4;
 
+function needsSilentElement(): boolean {
+  const ua = navigator.userAgent;
+  return /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+let silentUrl = '';
+/** One second of 8-bit mono silence at 8 kHz, so looping it is cheap (the old clip had no samples at all). */
+function silentWavUrl(): string {
+  if (silentUrl) return silentUrl;
+  const rate = 8000, n = rate;
+  const b = new Uint8Array(44 + n);
+  const dv = new DataView(b.buffer);
+  const str = (o: number, t: string) => { for (let i = 0; i < t.length; i++) b[o + i] = t.charCodeAt(i); };
+  str(0, 'RIFF'); dv.setUint32(4, 36 + n, true); str(8, 'WAVE'); str(12, 'fmt ');
+  dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, 1, true);
+  dv.setUint32(24, rate, true); dv.setUint32(28, rate, true); dv.setUint16(32, 1, true); dv.setUint16(34, 8, true);
+  str(36, 'data'); dv.setUint32(40, n, true);
+  b.fill(128, 44);
+  silentUrl = URL.createObjectURL(new Blob([b], { type: 'audio/wav' }));
+  return silentUrl;
+}
+
 export class Game {
   readonly track: TrackData = buildCardboardKings();
   ctx: AudioContext;
@@ -103,13 +125,16 @@ export class Game {
       if (nav.audioSession) nav.audioSession.type = 'playback';
     } catch { /* unsupported */ }
     try {
-      if (!this.silentEl) {
-        const el = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=');
+      // Only iOS/iPadOS needs a playing media element to leave the ringer-muted audio channel; Safari 17+ is
+      // covered by audioSession above. Everywhere else this was pure overhead (and a zero-length looping clip
+      // can spin the media pipeline and starve the whole browser).
+      if (!this.silentEl && needsSilentElement()) {
+        const el = new Audio(silentWavUrl());
         el.loop = true;
         el.setAttribute('playsinline', '');
         this.silentEl = el;
       }
-      void this.silentEl.play().catch(() => { /* needs a gesture; retried on next one */ });
+      if (this.silentEl) void this.silentEl.play().catch(() => { /* needs a gesture; retried on next one */ });
     } catch { /* ignore */ }
     if (this.ctx.state !== 'running') void this.ctx.resume().catch(() => { /* retry on next gesture */ });
     try {
