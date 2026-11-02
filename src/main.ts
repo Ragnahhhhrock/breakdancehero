@@ -96,15 +96,21 @@ function togglePause() {
   }
 }
 document.getElementById('pausebtn')!.addEventListener('click', togglePause);
+// losing focus (e.g. clicking the address bar) pauses a running song instead of letting it play on unattended
+window.addEventListener('blur', () => { if (game.phase === 'playing' || game.phase === 'countin') togglePause(); });
 document.addEventListener('visibilitychange', () => { if (document.hidden && (game.phase === 'playing' || game.phase === 'countin')) togglePause(); });
 
 // ---- loop
 let last = performance.now();
 let raf = 0;
 let closed = false;
+// Cap rendering to roughly 80 fps. On 120-240 Hz displays an uncapped loop redraws two full-window canvases
+// every refresh, which saturates the GPU and starves the browser's own UI (address bar, tab strip).
+const MIN_FRAME_MS = 11;
 function frame(now: number) {
   if (closed) return;
   raf = requestAnimationFrame(frame);
+  if (now - last < MIN_FRAME_MS) return;
   const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
   last = now;
   game.update();
