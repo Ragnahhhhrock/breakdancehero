@@ -97,8 +97,11 @@ document.addEventListener('visibilitychange', () => { if (document.hidden && (ga
 
 // ---- loop
 let last = performance.now();
+let raf = 0;
+let closed = false;
 function frame(now: number) {
-  requestAnimationFrame(frame);
+  if (closed) return;
+  raf = requestAnimationFrame(frame);
   const dt = Math.max(0, Math.min(0.05, (now - last) / 1000));
   last = now;
   game.update();
@@ -126,5 +129,15 @@ function frame(now: number) {
     hypeEl.style.width = `${Math.round(game.hype * 100)}%`;
   }
 }
-requestAnimationFrame(frame);
+raf = requestAnimationFrame(frame);
+
+// Release audio and GPU resources up front when the tab is closed, so teardown isn't one long freeze.
+// A persisted pagehide means the page is going into the back/forward cache and must stay usable.
+window.addEventListener('pagehide', (e) => {
+  if (e.persisted) return;
+  closed = true;
+  cancelAnimationFrame(raf);
+  game.dispose();
+  stage.dispose();
+});
 (window as unknown as { __bdh: unknown }).__bdh = { stage, game, highway };

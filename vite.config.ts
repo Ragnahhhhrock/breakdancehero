@@ -8,6 +8,7 @@ export default defineConfig({
     sourcemap: false,
     chunkSizeWarningLimit: 900,
     rollupOptions: {
+      output: { manualChunks: { three: ['three'] } },
       input: {
         main: resolve(__dirname, 'index.html'),
         styleGuide: resolve(__dirname, 'style-guide.html'),

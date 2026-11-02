@@ -679,5 +679,6 @@ export class Stage {
 
   dispose() {
     this.renderer.dispose();
+    this.renderer.forceContextLoss();
   }
 }

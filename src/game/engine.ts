@@ -4,6 +4,7 @@
  */
 import { buildCardboardKings, type TrackData } from '../audio/sequence';
 import { renderTrack } from '../audio/synth';
+import { loadCached, storeCached } from '../audio/cache';
 import { APPROACH, buildChart, type Difficulty, type Note } from './chart';
 import type { MoveName } from '../stage/dancer';
 
@@ -122,7 +123,13 @@ export class Game {
   }
 
   async load(onProgress?: (f: number) => void): Promise<void> {
+    const cached = await loadCached(this.track, this.ctx);
+    if (cached) { onProgress?.(1); this.buffer = cached; return; }
     this.buffer = await renderTrack(this.track, this.ctx.sampleRate, onProgress);
+    const buf = this.buffer;
+    // write the cache once the menu is interactive so it never competes with the render
+    const idle = (window as unknown as { requestIdleCallback?: (f: () => void) => void }).requestIdleCallback ?? ((f: () => void) => setTimeout(f, 1500));
+    idle(() => { void storeCached(this.track, buf); });
   }
 
   setTapSound(on: boolean) {
@@ -382,6 +389,8 @@ export class Game {
 
   dispose() {
     this.stopAudio();
-    void this.ctx.close();
+    if (this.silentEl) { this.silentEl.pause(); this.silentEl.removeAttribute('src'); this.silentEl.load(); this.silentEl = null; }
+    this.buffer = null;
+    void this.ctx.close().catch(() => { /* already closed */ });
   }
 }

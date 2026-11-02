@@ -60,13 +60,20 @@
 }
 </script>
 
-<!-- Google tag (gtag.js) - GA4 -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-6R9EVYWZ31"></script>
+<!-- Google tag (gtag.js) - GA4, loaded after the game is up so it never competes with first paint -->
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
   gtag('config', 'G-6R9EVYWZ31');
+  addEventListener('load', function () {
+    (window.requestIdleCallback || function (f) { setTimeout(f, 2000); })(function () {
+      var s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=G-6R9EVYWZ31';
+      document.head.appendChild(s);
+    });
+  });
 </script>
 </head>
 <body>
