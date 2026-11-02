@@ -2,6 +2,7 @@ import { DIFFICULTIES, type Difficulty } from '../game/chart';
 import type { Game, Result } from '../game/engine';
 import { addScore, cleanName, fetchScores, loadScores, rankFor, submitScore, type ScoreEntry } from '../game/scores';
 import { track } from '../analytics';
+import { currentLayout, nextLayout } from '../game/keys';
 
 const root = () => document.getElementById('ui')!;
 
@@ -26,13 +27,16 @@ export function showMenu(game: Game, ready: boolean, onPlay: (d: Difficulty) => 
     <button class="btn go" id="play" ${ready ? '' : 'disabled'}>${ready ? 'Play' : 'Loading beats…'}</button>
     <button class="btn" id="scores">High scores</button>
     <div class="settings"><button class="btn small" id="tapsnd"></button></div>
-    <div class="hint">Tap the arrows in the lanes as they hit the line. Keys: ← ↓ ↑ → or A S W D. Headphones recommended.</div>
+    <div class="settings"><button class="btn small" id="keysbtn"></button></div>
+    <div class="hint">Tap the arrows in the lanes as they hit the line. Keys: <span id="keyhint"></span> Headphones recommended.</div>
     <a class="coffee" href="https://buy.stripe.com/fZu00b521d4p4gU0UcaAw05" target="_blank" rel="noopener noreferrer">☕ Buy me a coffee · $5</a>
     <div class="credit">Another <a href="https://malgordon.com" target="_blank" rel="noopener noreferrer">Mal Gordon</a> creation</div>
   `);
   const sync = () => {
     p.querySelectorAll<HTMLButtonElement>('#diffs .btn').forEach((b) => b.classList.toggle('on', b.dataset.d === diff));
     p.querySelector('#best')!.textContent = `Best: ${game.best(diff).toLocaleString()}`;
+    p.querySelector('#keysbtn')!.textContent = `Keys: ${currentLayout().label}`;
+    p.querySelector('#keyhint')!.textContent = currentLayout().hint + '.';
     p.querySelector('#tapsnd')!.textContent = `Tap sound: ${game.tapSound ? 'on' : 'off'}`;
   };
   p.querySelectorAll<HTMLButtonElement>('#diffs .btn').forEach((b) => b.addEventListener('click', () => {
@@ -42,6 +46,7 @@ export function showMenu(game: Game, ready: boolean, onPlay: (d: Difficulty) => 
     sync();
   }));
   p.querySelector('#tapsnd')!.addEventListener('click', () => { game.setTapSound(!game.tapSound); track('setting_change', { setting: 'tap_sound', value: game.tapSound ? 'on' : 'off' }); sync(); });
+  p.querySelector('#keysbtn')!.addEventListener('click', () => { const l = nextLayout(); track('setting_change', { setting: 'keys', value: l.id }); sync(); });
   p.querySelector('#play')!.addEventListener('click', () => onPlay(diff));
   p.querySelector('#scores')!.addEventListener('click', () => { track('view_high_scores', { level_name: diff }); onScores(diff); });
   p.querySelector('.coffee')!.addEventListener('click', () => track('coffee_click', { location: 'menu' }));

@@ -5,6 +5,7 @@ import { Highway } from './game/highway';
 import type { Difficulty } from './game/chart';
 import { clearUI, showMenu, showPause, showResults, showScores } from './ui/ui';
 import { track } from './analytics';
+import { currentLayout } from './game/keys';
 
 const stageCanvas = document.getElementById('stage') as HTMLCanvasElement;
 const hwCanvas = document.getElementById('hw') as HTMLCanvasElement;
@@ -69,11 +70,10 @@ toMenu();
 game.load((f) => menu?.progress(f)).then(() => { loaded = true; menu?.ready(); track('game_loaded', { load_ms: Math.round(performance.now()) }); }).catch((e) => { console.error(e); });
 
 // ---- input
-const keys: Record<string, number> = { ArrowLeft: 0, KeyA: 0, ArrowDown: 1, KeyS: 1, ArrowUp: 2, KeyW: 2, ArrowRight: 3, KeyD: 3 };
 window.addEventListener('keydown', (e) => {
   if (e.repeat) return;
   if (e.code === 'Escape' || e.code === 'KeyP') { togglePause(); return; }
-  const lane = keys[e.code];
+  const lane = currentLayout().codes[e.code];
   if (lane !== undefined) { e.preventDefault(); game.tap(lane, (performance.now() - e.timeStamp) / 1000); }
 });
 hwCanvas.addEventListener('pointerdown', (e) => {
