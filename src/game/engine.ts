@@ -85,7 +85,7 @@ export class Game {
   private silentEl: HTMLAudioElement | null = null;
 
   private installUnlock() {
-    const events = ['touchend', 'pointerup', 'click', 'keydown'] as const;
+    const events = ['pointerdown', 'touchend', 'pointerup', 'click', 'keydown'] as const;
     const handler = () => {
       this.unlockAudio();
       if (this.unlocked) events.forEach((e) => window.removeEventListener(e, handler, true));

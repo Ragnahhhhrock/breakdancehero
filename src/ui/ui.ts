@@ -15,6 +15,12 @@ function el(html: string): HTMLElement {
 
 export function clearUI() { root().replaceChildren(); }
 
+/** Shown the instant Play is pressed so the wait for audio to start never looks like a crash. */
+export function showStarting() {
+  clearUI();
+  root().append(el(`<div class="spin" aria-hidden="true"></div><div class="sub" role="status">Starting…</div>`));
+}
+
 export function showMenu(game: Game, ready: boolean, onPlay: (d: Difficulty) => void, onScores: (d: Difficulty) => void) {
   clearUI();
   let diff: Difficulty = (localStorage.getItem('bdh.diff') as Difficulty) || 'normal';

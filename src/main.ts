@@ -3,7 +3,7 @@ import { Stage } from './stage/scene';
 import { Game, type Result } from './game/engine';
 import { Highway } from './game/highway';
 import type { Difficulty } from './game/chart';
-import { clearUI, showMenu, showPause, showResults, showScores } from './ui/ui';
+import { clearUI, showMenu, showPause, showResults, showScores, showStarting } from './ui/ui';
 import { track } from './analytics';
 import { currentLayout } from './game/keys';
 
@@ -60,10 +60,13 @@ function toMenu() {
   menu = showMenu(game, loaded, play, (d) => showScores(d, toMenu));
 }
 async function play(d: Difficulty) {
-  clearUI();
-  hud.hidden = false;
+  showStarting();
+  // let the "Starting…" state paint before any audio start-up work can block the main thread
+  await new Promise<void>((r) => requestAnimationFrame(() => setTimeout(r, 0)));
   track('level_start', { level_name: d });
   await game.start(d);
+  clearUI();
+  hud.hidden = false;
 }
 
 toMenu();
