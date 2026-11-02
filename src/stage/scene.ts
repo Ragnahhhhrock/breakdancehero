@@ -183,6 +183,9 @@ function neonTexture(layer: NeonLayer): THREE.CanvasTexture {
   return t;
 }
 
+const STAGE_MAX_PIXELS = 2_600_000;
+const STAGE_MSAA_MAX_PIXELS = 2_600_000;
+
 export class Stage {
   readonly renderer: THREE.WebGLRenderer;
   readonly scene = new THREE.Scene();
@@ -228,7 +231,10 @@ export class Stage {
   private beatKick = 0;
 
   constructor(canvas: HTMLCanvasElement, opts: { lowPower: boolean }) {
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: !opts.lowPower, alpha: false, powerPreference: 'high-performance' });
+    // Multisampled buffers cost samples x pixels of GPU memory, which balloons on ultrawide/4K windows and
+    // makes the GPU process slow to tear down. Only ask for MSAA when the canvas is a sane size.
+    const px = window.innerWidth * window.innerHeight * Math.min(window.devicePixelRatio || 1, 2) ** 2;
+    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: !opts.lowPower && px <= STAGE_MSAA_MAX_PIXELS, alpha: false, powerPreference: 'high-performance' });
     this.renderer.setClearColor(0x07041a, 1);
     this.scene.background = new THREE.Color(0x07041a);
     this.scene.fog = new THREE.FogExp2(0x07041a, 0.04);
@@ -454,7 +460,8 @@ export class Stage {
 
   /** Fit the view: where the dancer sits on screen and how large. */
   layout(width: number, height: number, anchorX: number, anchorY: number, heightFrac: number, dpr: number, band = 0.9) {
-    this.renderer.setPixelRatio(dpr);
+    // keep the 3D canvas within a pixel budget; CSS stretches it to fill the window
+    this.renderer.setPixelRatio(Math.max(0.6, Math.min(dpr, Math.sqrt(STAGE_MAX_PIXELS / (width * height)))));
     this.renderer.setSize(width, height, false);
     const cam = this.camera;
     const dist = this.camBase.distanceTo(new THREE.Vector3(0, 0.9, 0));
@@ -678,6 +685,8 @@ export class Stage {
   }
 
   dispose() {
+    // drop the drawing buffer first so the GPU memory is released before the context is torn down
+    this.renderer.setSize(1, 1, false);
     this.renderer.dispose();
     this.renderer.forceContextLoss();
   }
