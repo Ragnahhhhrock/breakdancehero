@@ -4,10 +4,10 @@ import { buildChart, chartStats, DIFFICULTIES } from '../src/game/chart';
 
 describe('track', () => {
   const track = buildCardboardKings();
-  it('is about two minutes at 124 BPM', () => {
+  it('runs 90 seconds at most at 124 BPM', () => {
     expect(track.bpm).toBe(124);
-    expect(track.duration).toBeGreaterThan(115);
-    expect(track.duration).toBeLessThan(135);
+    expect(track.duration).toBeGreaterThan(75);
+    expect(track.duration).toBeLessThanOrEqual(90);
   });
   it('has sorted events inside the track', () => {
     for (let i = 1; i < track.events.length; i++) expect(track.events[i].t).toBeGreaterThanOrEqual(track.events[i - 1].t);

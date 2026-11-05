@@ -58,7 +58,7 @@ const P = (steps: number[], vel = 1): Pat => {
 // --------------------------------------------------------------------------------------------
 
 const BPM = 124;
-const BARS = 64;
+const BARS = 44; // 44 bars at 124 BPM is about 85 s, about 88 s with the tail (keep the whole track under 90 s)
 
 const KICK_GROOVE = P([0, 7, 10]);
 const KICK_PEAK = P([0, 3, 7, 10, 14]);
@@ -124,14 +124,13 @@ interface Plan {
 const PLAN: Plan[] = [
   { name: 'Intro', from: 0, to: 2, energy: 0.2, kick: null, snare: null, clap: null, hat: HAT_8, ohat: null, cow: COW_GROOVE, tom: null, bass: 'none', lead: false, arp: true, pad: false, fillLast: false },
   { name: 'Drop in', from: 2, to: 4, energy: 0.4, kick: KICK_FOUR, snare: null, clap: CLAP_MAIN, hat: HAT_8, ohat: OHAT, cow: COW_GROOVE, tom: null, bass: 'none', lead: false, arp: true, pad: false, fillLast: false },
-  { name: 'Groove A', from: 4, to: 12, energy: 0.55, kick: KICK_GROOVE, snare: SNARE_MAIN, clap: CLAP_MAIN, hat: HAT_8, ohat: OHAT, cow: COW_GROOVE, tom: null, bass: 'groove', lead: false, arp: false, pad: false, fillLast: true },
-  { name: 'Groove B', from: 12, to: 20, energy: 0.7, kick: KICK_GROOVE, snare: SNARE_MAIN, clap: CLAP_MAIN, hat: HAT_16, ohat: OHAT, cow: COW_GROOVE, tom: null, bass: 'groove', lead: true, arp: false, pad: false, fillLast: true },
-  { name: 'Breakdown', from: 20, to: 24, energy: 0.3, kick: null, snare: null, clap: CLAP_MAIN, hat: null, ohat: null, cow: null, tom: null, bass: 'none', lead: true, arp: false, pad: true, fillLast: false },
-  { name: 'Peak 1', from: 24, to: 32, energy: 1, kick: KICK_PEAK, snare: SNARE_MAIN, clap: CLAP_MAIN, hat: HAT_16, ohat: OHAT, cow: COW_PEAK, tom: null, bass: 'peak', lead: true, arp: false, pad: false, fillLast: true },
-  { name: 'Groove C', from: 32, to: 40, energy: 0.65, kick: KICK_GROOVE, snare: SNARE_MAIN, clap: CLAP_MAIN, hat: HAT_8, ohat: OHAT, cow: COW_PEAK, tom: null, bass: 'groove', lead: false, arp: true, pad: false, fillLast: true },
-  { name: 'Break 2', from: 40, to: 44, energy: 0.3, kick: null, snare: null, clap: CLAP_MAIN, hat: null, ohat: null, cow: COW_GROOVE, tom: TOM_FILL, bass: 'none', lead: true, arp: false, pad: true, fillLast: false },
-  { name: 'Peak 2', from: 44, to: 56, energy: 1, kick: KICK_PEAK, snare: SNARE_MAIN, clap: CLAP_MAIN, hat: HAT_16, ohat: OHAT, cow: COW_PEAK, tom: null, bass: 'peak', lead: true, arp: true, pad: false, fillLast: true },
-  { name: 'Outro', from: 56, to: 64, energy: 0.45, kick: KICK_GROOVE, snare: null, clap: CLAP_MAIN, hat: HAT_8, ohat: null, cow: COW_GROOVE, tom: null, bass: 'groove', lead: false, arp: true, pad: false, fillLast: false },
+  { name: 'Groove A', from: 4, to: 8, energy: 0.55, kick: KICK_GROOVE, snare: SNARE_MAIN, clap: CLAP_MAIN, hat: HAT_8, ohat: OHAT, cow: COW_GROOVE, tom: null, bass: 'groove', lead: false, arp: false, pad: false, fillLast: true },
+  { name: 'Groove B', from: 8, to: 16, energy: 0.7, kick: KICK_GROOVE, snare: SNARE_MAIN, clap: CLAP_MAIN, hat: HAT_16, ohat: OHAT, cow: COW_GROOVE, tom: null, bass: 'groove', lead: true, arp: false, pad: false, fillLast: true },
+  { name: 'Breakdown', from: 16, to: 20, energy: 0.3, kick: null, snare: null, clap: CLAP_MAIN, hat: null, ohat: null, cow: null, tom: null, bass: 'none', lead: true, arp: false, pad: true, fillLast: false },
+  { name: 'Peak 1', from: 20, to: 28, energy: 1, kick: KICK_PEAK, snare: SNARE_MAIN, clap: CLAP_MAIN, hat: HAT_16, ohat: OHAT, cow: COW_PEAK, tom: null, bass: 'peak', lead: true, arp: false, pad: false, fillLast: true },
+  { name: 'Break 2', from: 28, to: 32, energy: 0.3, kick: null, snare: null, clap: CLAP_MAIN, hat: null, ohat: null, cow: COW_GROOVE, tom: TOM_FILL, bass: 'none', lead: true, arp: false, pad: true, fillLast: false },
+  { name: 'Peak 2', from: 32, to: 40, energy: 1, kick: KICK_PEAK, snare: SNARE_MAIN, clap: CLAP_MAIN, hat: HAT_16, ohat: OHAT, cow: COW_PEAK, tom: null, bass: 'peak', lead: true, arp: true, pad: false, fillLast: true },
+  { name: 'Outro', from: 40, to: 44, energy: 0.45, kick: KICK_GROOVE, snare: null, clap: CLAP_MAIN, hat: HAT_8, ohat: null, cow: COW_GROOVE, tom: null, bass: 'groove', lead: false, arp: true, pad: false, fillLast: false },
 ];
 
 export function buildCardboardKings(): TrackData {
